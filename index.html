@@ -481,38 +481,72 @@
 <div id="app"></div>
 <div class="toast" id="toast"></div>
 
-<script>
+<!-- ===== Supabase 연동 ===== -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = 'https://vqmxjiacvbbojtkohwdh.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_YxCYIH3beKQ9GZxNxHVJ6Q_7aKatO0X';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+(function(){
+  // TODO: Supabase 프로젝트 만든 뒤 아래 두 줄을 본인 값으로 교체하세요.
+  // Project Settings → API 에서 Project URL / anon public key 복사
+  var SUPABASE_URL = 'https://vqmxjiacvbbojtkohwdh.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_YxCYIH3beKQ9GZxNxHVJ6Q_7aKatO0X';
 
-  // 글 목록 불러오기
-  async function loadPosts() {
-    const { data, error } = await supabase
-      .from('study_groups')
-      .select('*')
-      .order('created_at', { ascending: false });
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    if (error) {
-      console.error(error);
-      return;
+  // 이 브라우저를 구분하기 위한 임시 id (개인 데이터: 로그인 세션, 계정, 내 동네 설정 등에 사용)
+  function getDeviceId(){
+    var id = window.localStorage.getItem('studyboard_device_id');
+    if(!id){
+      id = (window.crypto && window.crypto.randomUUID)
+        ? window.crypto.randomUUID()
+        : (Date.now() + '-' + Math.random().toString(36).slice(2));
+      window.localStorage.setItem('studyboard_device_id', id);
     }
-    console.log(data); // 여기서 받은 data를 기존 게시판 렌더링 함수에 넣으면 됩니다
+    return id;
   }
 
-  // 새 글 등록하기
-  async function addPost(title, description, location, contact) {
-    const { error } = await supabase
-      .from('study_groups')
-      .insert([{ title, description, location, contact }]);
+  // 기존 코드가 기대하는 window.storage.get/set/delete/list 인터페이스를
+  // Supabase의 kv_store 테이블로 구현. 이걸로 storageGet/Set/Delete/List (아래)는
+  // 그대로 두어도 자동으로 Supabase를 쓰게 됩니다.
+  window.storage = {
+    get: async function(key, shared){
+      var owner = shared ? '' : getDeviceId();
+      var res = await sb.from('kv_store').select('value')
+        .eq('store_key', key).eq('owner_id', owner).eq('shared', !!shared)
+        .maybeSingle();
+      if(res.error) throw res.error;
+      if(!res.data) throw new Error('not found: ' + key);
+      return { key: key, value: res.data.value, shared: !!shared };
+    },
+    set: async function(key, value, shared){
+      var owner = shared ? '' : getDeviceId();
+      var res = await sb.from('kv_store').upsert({
+        store_key: key, owner_id: owner, shared: !!shared,
+        value: value, updated_at: new Date().toISOString()
+      }, { onConflict: 'store_key,owner_id,shared' });
+      if(res.error) throw res.error;
+      return { key: key, value: value, shared: !!shared };
+    },
+    delete: async function(key, shared){
+      var owner = shared ? '' : getDeviceId();
+      var res = await sb.from('kv_store').delete()
+        .eq('store_key', key).eq('owner_id', owner).eq('shared', !!shared);
+      if(res.error) throw res.error;
+      return { key: key, deleted: true, shared: !!shared };
+    },
+    list: async function(prefix, shared){
+      var owner = shared ? '' : getDeviceId();
+      var q = sb.from('kv_store').select('store_key')
+        .eq('owner_id', owner).eq('shared', !!shared);
+      if(prefix) q = q.like('store_key', prefix + '%');
+      var res = await q;
+      if(res.error) throw res.error;
+      return { keys: (res.data || []).map(function(r){ return r.store_key; }), prefix: prefix, shared: !!shared };
+    }
+  };
+})();
+</script>
 
-    if (error) console.error(error);
-    else loadPosts(); // 등록 후 목록 새로고침
-  }
-
-  loadPosts();
+<script>
 (function(){
   var CATS = ["국어","영어","수학","사회","과학","코딩","기타"];
   var GRADES = ["중1","중2","중3","고1","고2","고3","학년무관"];
