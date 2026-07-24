@@ -1,1710 +1,1434 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>동네 스터디 게시판</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --board:#5b4030;
-    --board-dark:#4a3427;
-    --paper:#faf3e2;
-    --paper-shadow:#e8dcc0;
-    --ink:#2b2118;
-    --ink-soft:#6b5c4a;
-    --pin-red:#c1443d;
-    --pin-teal:#2f7b6d;
-    --pin-mustard:#d9a73b;
-    --pin-blue:#3d6fa8;
-    --pin-purple:#7a5ba8;
-    --pin-gray:#7d7266;
-    --pin-green:#5a8f4f;
-    --thread:#c9b892;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    font-family:'Noto Sans KR', sans-serif;
-    color:var(--ink);
-    background-color:var(--board);
-    background-image:
-      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.03) 0, transparent 40%),
-      radial-gradient(circle at 80% 70%, rgba(0,0,0,0.08) 0, transparent 40%),
-      repeating-linear-gradient(45deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 2px, transparent 2px, transparent 4px);
-    min-height:100vh;
-    -webkit-font-smoothing:antialiased;
-  }
-  button{font-family:inherit;}
-  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
-    outline:3px solid var(--pin-mustard);
-    outline-offset:2px;
-  }
-  @media (prefers-reduced-motion: reduce){
-    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>StudyZone - 우리 동네 스터디 매칭</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Babel for in-browser JSX compilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  /* ---------- header ---------- */
-  .board-header{
-    padding:36px 20px 20px;
-    text-align:center;
-    position:relative;
-  }
-  .board-title{
-    font-family:'Gaegu', cursive;
-    font-size:44px;
-    font-weight:700;
-    color:#f6ecd8;
-    margin:0;
-    text-shadow:0 2px 0 rgba(0,0,0,0.25);
-    letter-spacing:1px;
-  }
-  .board-sub{
-    color:#d8c9ab;
-    font-size:14px;
-    margin-top:6px;
-  }
-  .region-pill{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    margin-top:16px;
-    background:rgba(0,0,0,0.2);
-    border:1px solid rgba(255,255,255,0.15);
-    color:#f6ecd8;
-    padding:8px 16px;
-    border-radius:999px;
-    font-size:14px;
-    cursor:pointer;
-    transition:background 0.15s;
-  }
-  .region-pill:hover{background:rgba(0,0,0,0.32);}
-  .region-pill b{font-weight:700; color:#fff;}
+  <!-- ES Modules Import Map -->
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.294.0?external=react"
+      }
+    }
+  </script>
 
-  /* ---------- board / corkboard grid ---------- */
-  .board-wrap{
-    max-width:1100px;
-    margin:0 auto;
-    padding:10px 24px 120px;
-  }
-  .flyer-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
-    gap:34px 26px;
-    padding-top:20px;
-  }
-  .grade-filter-row{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    padding-top:22px;
-  }
-  .grade-chip{
-    border:1.5px solid rgba(255,255,255,0.25);
-    background:rgba(0,0,0,0.18);
-    color:#f0e6cf;
-    padding:7px 14px;
-    border-radius:999px;
-    font-size:13px;
-    font-weight:500;
-    cursor:pointer;
-    transition:background 0.15s, border-color 0.15s;
-  }
-  .grade-chip:hover{ background:rgba(0,0,0,0.3); }
-  .grade-chip.selected{
-    background:var(--pin-mustard);
-    border-color:var(--pin-mustard);
-    color:var(--ink);
-    font-weight:700;
-  }
-
-  .flyer{
-    position:relative;
-    background:var(--paper);
-    padding:26px 20px 20px;
-    box-shadow:0 10px 18px rgba(0,0,0,0.28), 0 2px 0 rgba(0,0,0,0.1);
-    min-height:220px;
-    display:flex;
-    flex-direction:column;
-    transform:rotate(var(--tilt, -1deg));
-    transition:transform 0.15s ease, box-shadow 0.15s ease;
-    background-image:
-      linear-gradient(rgba(0,0,0,0.015) 1px, transparent 1px);
-    background-size:100% 26px;
-    cursor:pointer;
-  }
-  .flyer:nth-child(3n){ --tilt: 1.4deg; }
-  .flyer:nth-child(3n+1){ --tilt: -1.6deg; }
-  .flyer:nth-child(3n+2){ --tilt: 0.6deg; }
-  .flyer:hover{
-    transform:rotate(0deg) translateY(-4px) scale(1.02);
-    box-shadow:0 16px 26px rgba(0,0,0,0.35);
-    z-index:5;
-  }
-  .pin{
-    position:absolute;
-    top:-12px;
-    left:50%;
-    transform:translateX(-50%);
-    width:20px;
-    height:20px;
-    border-radius:50%;
-    box-shadow:0 3px 4px rgba(0,0,0,0.4), inset -2px -2px 3px rgba(0,0,0,0.25), inset 2px 2px 3px rgba(255,255,255,0.4);
-  }
-  .cat-국어 .pin{ background:var(--pin-red); }
-  .cat-영어 .pin{ background:var(--pin-blue); }
-  .cat-수학 .pin{ background:var(--pin-purple); }
-  .cat-사회 .pin{ background:var(--pin-mustard); }
-  .cat-과학 .pin{ background:var(--pin-teal); }
-  .cat-코딩 .pin{ background:var(--pin-green); }
-  .cat-기타 .pin{ background:var(--pin-gray); }
-
-  .flyer-badges{
-    display:flex;
-    gap:6px;
-    align-items:center;
-    margin-bottom:10px;
-  }
-  .flyer-cat{
-    font-size:11px;
-    font-weight:700;
-    letter-spacing:0.5px;
-    padding:3px 9px;
-    border-radius:3px;
-    display:inline-block;
-    color:#fff;
-  }
-  .cat-국어 .flyer-cat{ background:var(--pin-red); }
-  .cat-영어 .flyer-cat{ background:var(--pin-blue); }
-  .cat-수학 .flyer-cat{ background:var(--pin-purple); }
-  .cat-사회 .flyer-cat{ background:var(--pin-mustard); }
-  .cat-과학 .flyer-cat{ background:var(--pin-teal); }
-  .cat-코딩 .flyer-cat{ background:var(--pin-green); }
-  .cat-기타 .flyer-cat{ background:var(--pin-gray); }
-
-  .flyer-grade{
-    font-size:11px;
-    font-weight:700;
-    letter-spacing:0.3px;
-    padding:2.5px 8px;
-    border-radius:3px;
-    display:inline-block;
-    color:var(--ink);
-    background:transparent;
-    border:1.5px solid var(--ink);
-  }
-
-  .flyer-title{
-    font-family:'Gaegu', cursive;
-    font-size:24px;
-    font-weight:700;
-    margin:0 0 8px;
-    line-height:1.25;
-    word-break:keep-all;
-  }
-  .flyer-meta{
-    font-size:13px;
-    color:var(--ink-soft);
-    margin-bottom:4px;
-    display:flex;
-    gap:6px;
-  }
-  .flyer-meta b{color:var(--ink); font-weight:700;}
-  .flyer-desc{
-    font-size:13.5px;
-    line-height:1.55;
-    color:var(--ink);
-    margin-top:10px;
-    flex:1;
-    word-break:keep-all;
-    white-space:pre-wrap;
-  }
-  .flyer-footer{
-    margin-top:14px;
-    padding-top:10px;
-    border-top:1px dashed var(--paper-shadow);
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    font-size:12px;
-    color:var(--ink-soft);
-  }
-  .flyer-delete{
-    background:none;
-    border:none;
-    color:var(--ink-soft);
-    cursor:pointer;
-    font-size:12px;
-    text-decoration:underline;
-    padding:2px;
-  }
-  .flyer-delete:hover{color:var(--pin-red);}
-
-  /* ---------- empty state ---------- */
-  .empty-state{
-    text-align:center;
-    padding:70px 20px;
-    color:#f0e6cf;
-  }
-  .empty-state .big{
-    font-family:'Gaegu', cursive;
-    font-size:28px;
-    margin-bottom:8px;
-  }
-  .empty-state .small{
-    font-size:14px;
-    color:#cbb98f;
-  }
-
-  /* ---------- floating add button ---------- */
-  .fab{
-    position:fixed;
-    right:26px;
-    bottom:26px;
-    background:var(--pin-red);
-    color:#fff;
-    border:none;
-    border-radius:999px;
-    padding:16px 22px;
-    font-size:15px;
-    font-weight:700;
-    cursor:pointer;
-    box-shadow:0 8px 18px rgba(0,0,0,0.4);
-    display:flex;
-    align-items:center;
-    gap:8px;
-    transition:transform 0.15s, box-shadow 0.15s;
-    z-index:20;
-  }
-  .fab:hover{ transform:translateY(-3px); box-shadow:0 12px 22px rgba(0,0,0,0.45); }
-
-  /* ---------- modal shared ---------- */
-  .modal-overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(20,14,8,0.6);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:50;
-    padding:20px;
-  }
-  .modal-card{
-    background:var(--paper);
-    max-width:440px;
-    width:100%;
-    max-height:88vh;
-    overflow-y:auto;
-    padding:30px 26px 26px;
-    position:relative;
-    box-shadow:0 20px 50px rgba(0,0,0,0.5);
-  }
-  .modal-card .pin{ top:-12px; }
-  .modal-title{
-    font-family:'Gaegu', cursive;
-    font-size:26px;
-    font-weight:700;
-    margin:6px 0 18px;
-  }
-  .field{ margin-bottom:14px; }
-  .field label{
-    display:block;
-    font-size:12.5px;
-    font-weight:700;
-    color:var(--ink-soft);
-    margin-bottom:5px;
-  }
-  .field label .req{
-    color:var(--pin-red);
-    margin-left:2px;
-  }
-  .field input, .field select, .field textarea{
-    width:100%;
-    border:1.5px solid var(--paper-shadow);
-    background:#fff;
-    padding:9px 11px;
-    font-size:14px;
-    font-family:inherit;
-    color:var(--ink);
-    border-radius:4px;
-    transition:border-color 0.15s, background 0.15s;
-  }
-  .field input.invalid, .field select.invalid, .field textarea.invalid{
-    border-color:var(--pin-red);
-    background:#fff5f4;
-  }
-  .field-error-msg{
-    font-size:11.5px;
-    color:var(--pin-red);
-    margin-top:4px;
-  }
-  .field textarea{ resize:vertical; min-height:72px; }
-  .field-row{ display:flex; gap:10px; flex-wrap:wrap; }
-  .field-row .field{ flex:1; min-width:88px; }
-  .modal-actions{
-    display:flex;
-    gap:10px;
-    margin-top:20px;
-  }
-  .btn-primary, .btn-secondary{
-    flex:1;
-    border:none;
-    padding:12px;
-    border-radius:5px;
-    font-size:14px;
-    font-weight:700;
-    cursor:pointer;
-  }
-  .btn-primary{ background:var(--pin-red); color:#fff; }
-  .btn-primary:hover{ background:#a8362f; }
-  .btn-primary:disabled{ background:#c9b3a8; cursor:not-allowed; }
-  .btn-secondary{ background:transparent; color:var(--ink-soft); border:1.5px solid var(--paper-shadow); }
-  .btn-secondary:hover{ background:rgba(0,0,0,0.04); }
-  .field-hint{ font-size:11.5px; color:var(--ink-soft); margin-top:4px; }
-  .close-x{
-    position:absolute;
-    top:12px;
-    right:14px;
-    background:none;
-    border:none;
-    font-size:20px;
-    color:var(--ink-soft);
-    cursor:pointer;
-    line-height:1;
-  }
-
-  .region-grid{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:8px;
-    margin-top:10px;
-  }
-  .region-btn{
-    border:1.5px solid var(--paper-shadow);
-    background:#fff;
-    padding:10px 6px;
-    border-radius:5px;
-    font-size:13.5px;
-    cursor:pointer;
-    color:var(--ink);
-  }
-  .region-btn:hover{ border-color:var(--pin-red); color:var(--pin-red); }
-  .region-btn.selected{ background:var(--pin-red); border-color:var(--pin-red); color:#fff; }
-
-  .loading-row{
-    text-align:center;
-    color:#d8c9ab;
-    padding:50px 0;
-    font-size:14px;
-  }
-
-  .flyer-capacity-full{ color:var(--pin-red); font-weight:700; }
-
-  .flyer-join-btn{
-    margin-top:14px;
-    border:none;
-    padding:11px;
-    border-radius:5px;
-    font-size:14px;
-    font-weight:700;
-    cursor:pointer;
-    background:var(--pin-teal);
-    color:#fff;
-    width:100%;
-    transition:filter 0.15s, background 0.15s;
-  }
-  .flyer-join-btn:hover{ filter:brightness(1.08); }
-  .flyer-join-btn:disabled{
-    background:#c9c2b4;
-    color:#6b5c4a;
-    cursor:not-allowed;
-    filter:none;
-  }
-
-  .participant-chip-row{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px;
-    margin-top:10px;
-  }
-  .participant-chip{
-    background:var(--paper-shadow);
-    color:var(--ink);
-    padding:4px 10px;
-    border-radius:999px;
-    font-size:12px;
-  }
-
-  .auth-toggle{
-    text-align:center;
-    margin-top:16px;
-  }
-  .auth-toggle button{
-    background:none;
-    border:none;
-    color:var(--pin-blue);
-    font-weight:700;
-    cursor:pointer;
-    font-size:12.5px;
-    text-decoration:underline;
-    padding:0;
-  }
-
-  .toast{
-    position:fixed;
-    left:50%;
-    bottom:96px;
-    transform:translateX(-50%);
-    background:var(--ink);
-    color:#fff;
-    padding:10px 18px;
-    border-radius:6px;
-    font-size:13px;
-    z-index:60;
-    opacity:0;
-    pointer-events:none;
-    transition:opacity 0.2s, bottom 0.2s;
-  }
-  .toast.show{ opacity:1; bottom:106px; }
-
-  @media (max-width:520px){
-    .board-title{ font-size:32px; }
-    .board-wrap{ padding:0 14px 120px; }
-    .region-grid{ grid-template-columns:repeat(2, 1fr); }
-    .field-row{ flex-direction:column; gap:0; }
-  }
-</style>
+  <style>
+    /* iOS 등 모바일 환경 하단 안전 영역 처리 */
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    /* 스크롤바 숨기기 (선택사항) */
+    ::-webkit-scrollbar { display: none; }
+    body { -ms-overflow-style: none; scrollbar-width: none; background-color: #000; }
+  </style>
 </head>
 <body>
+  <div id="root"></div>
 
-<div id="app"></div>
-<div class="toast" id="toast"></div>
+  <!-- 메인 애플리케이션 스크립트 -->
+  <script type="text/babel" data-type="module">
+    import React, { useState, useEffect, useMemo, useRef } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { 
+      MapPin, BookOpen, Users, Search, User, ChevronRight, 
+      ArrowLeft, Sparkles, GraduationCap, Target, 
+      Plus, Loader2, Book, Check, Mail, Lock, LogIn, LogOut, Settings,
+      AlertCircle, Send, LogOut as LeaveIcon, 
+      BadgeCheck, Thermometer, Clock, Coffee, Flag, Megaphone, AlertTriangle, UserPlus,
+      Eye, EyeOff, Edit2, Camera, Upload, ChevronDown, ChevronUp
+    } from 'lucide-react';
+    
+    // Firebase Imports
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+    import { 
+      getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged
+    } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    import { 
+      getFirestore, doc, setDoc, getDoc, collection, onSnapshot, 
+      updateDoc, arrayUnion, addDoc 
+    } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-<!-- ===== Supabase 연동 ===== -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-(function(){
-  // TODO: Supabase 프로젝트 만든 뒤 아래 두 줄을 본인 값으로 교체하세요.
-  // Project Settings → API 에서 Project URL / anon public key 복사
-  var SUPABASE_URL = 'https://vqmxjiacvbbojtkohwdh.supabase.co';
-  var SUPABASE_ANON_KEY = 'sb_publishable_YxCYIH3beKQ9GZxNxHVJ6Q_7aKatO0X';
+    // --- [Firebase 초기화] ---
+    const firebaseConfig = typeof window.__firebase_config !== 'undefined' ? JSON.parse(window.__firebase_config) : {};
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'studyzone-default-id';
 
-  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // --- [상수 데이터] ---
+    const PUBLISHERS = ['천재교육', '비상교육', '미래엔', '동아출판', '지학사', '선택 안 함'];
+    const TIME_SLOTS = ['평일 방과후', '평일 밤(야자 후)', '주말 오전', '주말 오후/저녁'];
+    const PLACE_PREFS = ['스터디카페', '시/구립 도서관', '일반 카페', '온라인(디스코드)'];
 
-  // 이 브라우저를 구분하기 위한 임시 id (개인 데이터: 로그인 세션, 계정, 내 동네 설정 등에 사용)
-  function getDeviceId(){
-    var id = window.localStorage.getItem('studyboard_device_id');
-    if(!id){
-      id = (window.crypto && window.crypto.randomUUID)
-        ? window.crypto.randomUUID()
-        : (Date.now() + '-' + Math.random().toString(36).slice(2));
-      window.localStorage.setItem('studyboard_device_id', id);
-    }
-    return id;
-  }
-
-  // 기존 코드가 기대하는 window.storage.get/set/delete/list 인터페이스를
-  // Supabase의 kv_store 테이블로 구현. 이걸로 storageGet/Set/Delete/List (아래)는
-  // 그대로 두어도 자동으로 Supabase를 쓰게 됩니다.
-  window.storage = {
-    get: async function(key, shared){
-      var owner = shared ? '' : getDeviceId();
-      var res = await sb.from('kv_store').select('value')
-        .eq('store_key', key).eq('owner_id', owner).eq('shared', !!shared)
-        .maybeSingle();
-      if(res.error) throw res.error;
-      if(!res.data) throw new Error('not found: ' + key);
-      return { key: key, value: res.data.value, shared: !!shared };
-    },
-    set: async function(key, value, shared){
-      var owner = shared ? '' : getDeviceId();
-      var res = await sb.from('kv_store').upsert({
-        store_key: key, owner_id: owner, shared: !!shared,
-        value: value, updated_at: new Date().toISOString()
-      }, { onConflict: 'store_key,owner_id,shared' });
-      if(res.error) throw res.error;
-      return { key: key, value: value, shared: !!shared };
-    },
-    delete: async function(key, shared){
-      var owner = shared ? '' : getDeviceId();
-      var res = await sb.from('kv_store').delete()
-        .eq('store_key', key).eq('owner_id', owner).eq('shared', !!shared);
-      if(res.error) throw res.error;
-      return { key: key, deleted: true, shared: !!shared };
-    },
-    list: async function(prefix, shared){
-      var owner = shared ? '' : getDeviceId();
-      var q = sb.from('kv_store').select('store_key')
-        .eq('owner_id', owner).eq('shared', !!shared);
-      if(prefix) q = q.like('store_key', prefix + '%');
-      var res = await q;
-      if(res.error) throw res.error;
-      return { keys: (res.data || []).map(function(r){ return r.store_key; }), prefix: prefix, shared: !!shared };
-    }
-  };
-})();
-</script>
-
-<script>
-(function(){
-  var CATS = ["국어","영어","수학","사회","과학","코딩","기타"];
-  var GRADES = ["중1","중2","중3","고1","고2","고3","학년무관"];
-  var REGIONS = ["서울","경기","인천","부산","대구","광주","대전","울산","세종",
-                  "강원","충북","충남","전북","전남","경북","경남","제주"];
-
-  var state = {
-    currentUser: null,
-    authMode: 'login',
-    myRegion: null,
-    posts: [],
-    loading: true,
-    showCreate: false,
-    showRegionPicker: false,
-    detailPost: null,
-    gradeFilter: '전체',
-    error: null
-  };
-
-  var app = document.getElementById('app');
-  var toastEl = document.getElementById('toast');
-
-  function showToast(msg){
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
-  }
-
-  function escapeHtml(str){
-    var d = document.createElement('div');
-    d.textContent = str == null ? '' : String(str);
-    return d.innerHTML;
-  }
-
-  function catClass(cat){
-    return CATS.indexOf(cat) >= 0 ? 'cat-' + cat : 'cat-기타';
-  }
-
-  // ---------- resilient storage layer ----------
-  // Tries window.storage first (Claude artifact persistence, shared across
-  // everyone who opens the artifact). If that's unavailable — e.g. this file
-  // deployed on its own static host — it falls back to the browser's
-  // localStorage, so data survives reloads on that same browser/device.
-  // If even localStorage is blocked (e.g. private browsing), it falls back
-  // to an in-memory store for just this page load.
-  var LS_PREFIX = 'studyboard:';
-  var memoryStore = { personal:{}, shared:{} };
-  var persistWarned = false;
-
-  function warnNoPersist(usingLocalStorage){
-    if(!persistWarned){
-      persistWarned = true;
-      showToast(usingLocalStorage
-        ? '이 브라우저에만 저장돼요. 다른 사람과는 공유되지 않아요.'
-        : '저장소에 연결할 수 없어 이 화면에서만 임시로 동작해요.');
-    }
-  }
-
-  function lsAvailable(){
-    try{
-      var t = '__ls_test__';
-      window.localStorage.setItem(t, '1');
-      window.localStorage.removeItem(t);
-      return true;
-    }catch(e){
-      return false;
-    }
-  }
-
-  // window.storage 호출이 (에러 없이) 그냥 응답을 안 주고 멈추는 경우를 대비한 타임아웃.
-  // 공유 링크로 들어온 사용자처럼 window.storage에 대한 인증/권한이 없는 경우
-  // 에러가 나지 않고 그냥 응답이 안 오는 케이스가 있어서, 일정 시간 안에 응답이 없으면
-  // 실패로 간주하고 localStorage/메모리 폴백으로 넘어가도록 함.
-  function withTimeout(promise, ms){
-    return new Promise(function(resolve, reject){
-      var settled = false;
-      var timer = setTimeout(function(){
-        if(!settled){ settled = true; reject(new Error('storage timed out')); }
-      }, ms);
-      promise.then(
-        function(v){ if(!settled){ settled = true; clearTimeout(timer); resolve(v); } },
-        function(e){ if(!settled){ settled = true; clearTimeout(timer); reject(e); } }
-      );
-    });
-  }
-
-  async function storageGet(key, shared){
-    try{
-      if(!window.storage) throw new Error('storage unavailable');
-      return await withTimeout(window.storage.get(key, shared), 6000);
-    }catch(e){
-      var nsKey = LS_PREFIX + (shared ? 'shared:' : 'personal:') + key;
-      if(lsAvailable()){
-        var lsVal = window.localStorage.getItem(nsKey);
-        if(lsVal !== null){
-          return { key: key, value: lsVal, shared: shared };
-        }
-      }
-      var store = shared ? memoryStore.shared : memoryStore.personal;
-      if(Object.prototype.hasOwnProperty.call(store, key)){
-        return { key: key, value: store[key], shared: shared };
-      }
-      throw e;
-    }
-  }
-
-  async function storageSet(key, value, shared){
-    try{
-      if(!window.storage) throw new Error('storage unavailable');
-      var r = await withTimeout(window.storage.set(key, value, shared), 6000);
-      if(!r) throw new Error('empty result from storage.set');
-      return r;
-    }catch(e){
-      console.error('storage.set falling back:', e);
-      var nsKey = LS_PREFIX + (shared ? 'shared:' : 'personal:') + key;
-      if(lsAvailable()){
-        try{
-          window.localStorage.setItem(nsKey, value);
-          warnNoPersist(true);
-          return { key: key, value: value, shared: shared };
-        }catch(lsErr){ /* fall through to memory */ }
-      }
-      warnNoPersist(false);
-      var store = shared ? memoryStore.shared : memoryStore.personal;
-      store[key] = value;
-      return { key: key, value: value, shared: shared };
-    }
-  }
-
-  async function storageDelete(key, shared){
-    try{
-      if(!window.storage) throw new Error('storage unavailable');
-      return await withTimeout(window.storage.delete(key, shared), 6000);
-    }catch(e){
-      var nsKey = LS_PREFIX + (shared ? 'shared:' : 'personal:') + key;
-      if(lsAvailable()){
-        window.localStorage.removeItem(nsKey);
-      }
-      var store = shared ? memoryStore.shared : memoryStore.personal;
-      delete store[key];
-      return { key: key, deleted: true, shared: shared };
-    }
-  }
-
-  async function storageList(prefix, shared){
-    try{
-      if(!window.storage) throw new Error('storage unavailable');
-      return await withTimeout(window.storage.list(prefix, shared), 6000);
-    }catch(e){
-      var nsPrefix = LS_PREFIX + (shared ? 'shared:' : 'personal:') + (prefix || '');
-      var keys = [];
-      if(lsAvailable()){
-        for(var i=0;i<window.localStorage.length;i++){
-          var fullKey = window.localStorage.key(i);
-          if(fullKey && fullKey.indexOf(nsPrefix) === 0){
-            keys.push(fullKey.slice(LS_PREFIX.length + (shared ? 7 : 9)));
-          }
-        }
-      }
-      var store = shared ? memoryStore.shared : memoryStore.personal;
-      Object.keys(store).forEach(function(k){
-        if((!prefix || k.indexOf(prefix) === 0) && keys.indexOf(k) === -1){
-          keys.push(k);
-        }
-      });
-      return { keys: keys, prefix: prefix, shared: shared };
-    }
-  }
-
-  // ---------- auth (this browser / this Claude 계정에만 저장됨) ----------
-  async function hashPassword(pw){
-    try{
-      if(window.crypto && window.crypto.subtle && window.crypto.subtle.digest){
-        var enc = new TextEncoder().encode(pw);
-        var buf = await window.crypto.subtle.digest('SHA-256', enc);
-        return 'sha256:' + Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-      }
-    }catch(e){
-      /* crypto.subtle을 쓸 수 없는 환경 (예: 샌드박스) -> 아래 폴백으로 진행 */
-    }
-    // 폴백: SubtleCrypto가 막힌 환경에서도 로그인이 동작하도록 하는 간단한 해시.
-    // 실제 서비스 수준의 보안 강도는 아니며, 이 데모 게시판에서 계정 구분 용도로만 씀.
-    var hash = 0;
-    for(var i=0;i<pw.length;i++){
-      hash = ((hash << 5) - hash) + pw.charCodeAt(i);
-      hash |= 0;
-    }
-    return 'fb:' + Math.abs(hash).toString(16) + ':' + pw.length;
-  }
-
-  async function loadSession(){
-    try{
-      var s = await storageGet('session', false);
-      if(s && s.value){
-        var accRes = await storageGet('account:' + s.value, false);
-        if(accRes && accRes.value){
-          var acc = JSON.parse(accRes.value);
-          state.currentUser = { id: acc.id, nickname: acc.nickname, contact: acc.contact || '' };
-        }
-      }
-    }catch(e){ /* 로그인 안 된 상태 */ }
-  }
-
-  async function registerAccount(id, password, nickname, contact){
-    var existing = null;
-    try{ existing = await storageGet('account:' + id, false); }catch(e){ existing = null; }
-    if(existing && existing.value){
-      return { ok:false, reason:'duplicate' };
-    }
-    var hash = await hashPassword(password);
-    var acc = { id:id, passwordHash:hash, nickname:nickname, contact:contact || '' };
-    await storageSet('account:' + id, JSON.stringify(acc), false);
-    await storageSet('session', id, false);
-    return { ok:true, account: acc };
-  }
-
-  async function loginAccount(id, password){
-    var res;
-    try{ res = await storageGet('account:' + id, false); }catch(e){ res = null; }
-    if(!res || !res.value){
-      return { ok:false, reason:'notfound' };
-    }
-    var acc = JSON.parse(res.value);
-    var hash = await hashPassword(password);
-    if(hash !== acc.passwordHash){
-      return { ok:false, reason:'wrongpw' };
-    }
-    await storageSet('session', id, false);
-    return { ok:true, account: acc };
-  }
-
-  async function logout(){
-    try{ await storageDelete('session', false); }catch(e){ /* ignore */ }
-    state.currentUser = null;
-    render();
-    showToast('로그아웃했어요.');
-  }
-
-  // 이 브라우저(또는 이 Claude 계정)에 저장된 아이디/비밀번호 계정을 전부 삭제.
-  // 게시글(스터디 글) 데이터는 건드리지 않음 - 로그인 정보만 초기화.
-  async function resetAllAccounts(){
-    try{
-      var listRes = await storageList('account:', false);
-      var keys = (listRes && listRes.keys) ? listRes.keys : [];
-      for(var i=0;i<keys.length;i++){
-        try{ await storageDelete(keys[i], false); }catch(e){ /* skip */ }
-      }
-      try{ await storageDelete('session', false); }catch(e){ /* ignore */ }
-    }catch(e){
-      console.error('resetAllAccounts failed:', e);
-    }
-    // window.storage/서버 쪽에서 지워지지 않았을 수도 있는 로컬 폴백 흔적까지 확실히 제거
-    try{
-      if(lsAvailable()){
-        for(var i2 = window.localStorage.length - 1; i2 >= 0; i2--){
-          var k = window.localStorage.key(i2);
-          if(k && k.indexOf(LS_PREFIX + 'personal:account:') === 0){
-            window.localStorage.removeItem(k);
-          }
-        }
-        window.localStorage.removeItem(LS_PREFIX + 'personal:session');
-      }
-    }catch(e){ /* ignore */ }
-    memoryStore.personal = {};
-    state.currentUser = null;
-    state.authMode = 'login';
-    render();
-    showToast('로그인 정보를 모두 초기화했어요.');
-  }
-
-  async function loadMyRegion(){
-    try{
-      var res = await storageGet('my-region', false);
-      state.myRegion = res ? res.value : null;
-    }catch(e){
-      state.myRegion = null;
-    }
-  }
-
-  async function loadPosts(){
-    state.loading = true;
-    render();
-    try{
-      var listRes = await storageList('group:', true);
-      var keys = (listRes && listRes.keys) ? listRes.keys : [];
-      var posts = [];
-      for(var i=0;i<keys.length;i++){
-        try{
-          var r = await storageGet(keys[i], true);
-          if(r && r.value){
-            var parsed = JSON.parse(r.value);
-            parsed.participants = parsed.participants || [];
-            posts.push(parsed);
-          }
-        }catch(e){ /* skip broken entry */ }
-      }
-      posts.sort(function(a,b){ return (b.createdAt||0) - (a.createdAt||0); });
-      state.posts = posts;
-      state.error = null;
-    }catch(e){
-      state.error = '게시글을 불러오지 못했어요. 잠시 후 다시 시도해주세요.';
-    }
-    state.loading = false;
-    render();
-  }
-
-  async function setMyRegion(region){
-    await storageSet('my-region', region, false);
-    state.myRegion = region;
-    state.showRegionPicker = false;
-    render();
-  }
-
-  async function createPost(data){
-    var id = 'group:' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
-    var payload = {
-      id: id,
-      title: data.title,
-      category: data.category,
-      grade: data.grade,
-      region: state.myRegion,
-      schedule: data.schedule,
-      capacity: data.capacity,
-      contact: data.contact,
-      nickname: data.nickname,
-      description: data.description,
-      participants: [],
-      authorId: state.currentUser ? state.currentUser.id : null,
-      createdAt: Date.now()
+    const REGIONS = {
+      '서울특별시': ['강남구', '강동구', '강북구', '강서구', '관악구', '광진구', '구로구', '금천구', '노원구', '도봉구', '동대문구', '동작구', '마포구', '서대문구', '서초구', '성동구', '성북구', '송파구', '양천구', '영등포구', '용산구', '은평구', '종로구', '중구', '중랑구'],
+      '경기도': ['가평군', '고양시', '과천시', '광명시', '광주시', '구리시', '군포시', '김포시', '남양주시', '동두천시', '부천시', '성남시', '수원시', '시흥시', '안산시', '안성시', '안양시', '양주시', '양평군', '여주시', '연천군', '오산시', '용인시', '의왕시', '의정부시', '이천시', '파주시', '평택시', '포천시', '하남시', '화성시'],
+      '인천광역시': ['강화군', '계양구', '남동구', '동구', '미추홀구', '부평구', '서구', '연수구', '옹진군', '중구'],
+      '부산광역시': ['강서구', '금정구', '기장군', '남구', '동구', '동래구', '부산진구', '북구', '사상구', '사하구', '서구', '수영구', '연제구', '영도구', '중구', '해운대구'],
+      '대구광역시': ['남구', '달서구', '달성군', '동구', '북구', '서구', '수성구', '중구', '군위군'],
+      '광주광역시': ['광산구', '남구', '동구', '북구', '서구'],
+      '대전광역시': ['대덕구', '동구', '서구', '유성구', '중구'],
+      '울산광역시': ['남구', '동구', '북구', '울주군', '중구'],
+      '세종특별자치시': ['세종특별자치시'],
+      '강원특별자치도': ['강릉시', '고성군', '동해시', '삼척시', '속초시', '양구군', '양양군', '영월군', '원주시', '인제군', '정선군', '철원군', '춘천시', '태백시', '평창군', '홍천군', '화천군', '횡성군'],
+      '충청북도': ['괴산군', '단양군', '보은군', '영동군', '옥천군', '음성군', '제천시', '증평군', '진천군', '청주시', '충주시'],
+      '충청남도': ['계룡시', '공주시', '금산군', '논산시', '당진시', '보령시', '부여군', '서산시', '서천군', '아산시', '예산군', '천안시', '청양군', '태안군', '홍성군'],
+      '전북특별자치도': ['고창군', '군산시', '김제시', '남원시', '무주군', '부안군', '순창군', '완주군', '익산시', '임실군', '장수군', '전주시', '정읍시', '진안군'],
+      '전라남도': ['강진군', '고흥군', '곡성군', '광양시', '구례군', '나주시', '담양군', '목포시', '무안군', '보성군', '순천시', '신안군', '여수시', '영광군', '영암군', '완도군', '장성군', '장흥군', '진도군', '함평군', '해남군', '화순군'],
+      '경상북도': ['경산시', '경주시', '고령군', '구미시', '김천시', '문경시', '봉화군', '상주시', '성주군', '안동시', '영덕군', '영양군', '영주시', '영천시', '예천군', '울릉군', '울진군', '의성군', '청도군', '청송군', '칠곡군', '포항시'],
+      '경상남도': ['거제시', '거창군', '고성군', '김해시', '남해군', '밀양시', '사천시', '산청군', '양산시', '의령군', '진주시', '창녕군', '창원시', '통영시', '하동군', '함안군', '함양군', '합천군'],
+      '제주특별자치도': ['서귀포시', '제주시']
     };
-    await storageSet(id, JSON.stringify(payload), true);
-    state.posts.unshift(payload);
-    state.showCreate = false;
-    render();
-    showToast('스터디가 게시판에 붙었어요 📌');
-    return true;
-  }
 
-  // authorId가 있는 글(로그인 기능 도입 이후 작성된 글)은 작성자 본인만 삭제 가능.
-  // authorId가 없는 옛 글(로그인 기능 도입 이전 데이터)은 기존 닉네임 확인 방식을 그대로 허용.
-  function canDeletePost(post){
-    if(post.authorId){
-      return !!(state.currentUser && state.currentUser.id === post.authorId);
-    }
-    return true;
-  }
-
-  async function deletePost(post){
-    if(post.authorId){
-      if(!state.currentUser || state.currentUser.id !== post.authorId){
-        showToast('본인이 작성한 글만 삭제할 수 있어요.');
-        return;
+    const SUBJECT_CATEGORIES = {
+      '중등': {
+        '국어': ['국어'],
+        '영어': ['영어'],
+        '수학': ['수학'],
+        '과학': ['과학'],
+        '사회': ['사회', '역사'],
+        '한국사': ['한국사']
+      },
+      '고등': {
+        '국어': ['국어(공통)', '화법과 작문', '언어와 매체', '문학', '독서'],
+        '영어': ['영어(공통)', '영어 I', '영어 II', '영어 회화', '영어 독해와 작문'],
+        '수학': ['수학(상/하)', '수학 I', '수학 II', '미적분', '확률과 통계', '기하'],
+        '과학': ['통합과학', '물리학 I', '물리학 II', '화학 I', '화학 II', '생명과학 I', '생명과학 II', '지구과학 I', '지구과학 II'],
+        '사회': ['통합사회', '한국지리', '세계지리', '세계사', '동아시아사', '경제', '정치와 법', '사회·문화', '생활과 윤리', '윤리와 사상'],
+        '한국사': ['한국사']
       }
-      if(!confirm('"' + post.title + '" 글을 삭제할까요?')) return;
-    } else {
-      var typed = prompt('삭제하려면 작성 시 입력한 닉네임 "' + post.nickname + '"을(를) 그대로 입력해주세요.');
-      if(typed === null) return;
-      if(typed !== post.nickname){
-        showToast('닉네임이 일치하지 않아요.');
-        return;
-      }
-    }
-    await storageDelete(post.id, true);
-    state.posts = state.posts.filter(function(p){ return p.id !== post.id; });
-    if(state.detailPost && state.detailPost.id === post.id){
-      state.detailPost = null;
-    }
-    render();
-    showToast('게시글을 뗐어요.');
-  }
+    };
 
-  // 정원이 숫자로 지정된 경우 그 숫자를, "인원 협의" 등 숫자가 아니면 null(정원 무제한)을 반환
-  function capacityNumber(post){
-    var n = parseInt(post.capacity, 10);
-    return isNaN(n) ? null : n;
-  }
+    function App() {
+      const [authUser, setAuthUser] = useState(null);
+      const [isAuthReady, setIsAuthReady] = useState(false);
+      const [isLoggedIn, setIsLoggedIn] = useState(false); 
+      const [isProcessing, setIsProcessing] = useState(false);
+      
+      const [currentView, setCurrentView] = useState('home'); 
+      const [onboardingStep, setOnboardingStep] = useState(1);
+      const [activeTab, setActiveTab] = useState('recommend'); 
+      
+      // 로그인 & 회원가입 폼
+      const [loginEmail, setLoginEmail] = useState('');
+      const [loginPassword, setLoginPassword] = useState('');
+      const [showLoginPassword, setShowLoginPassword] = useState(false);
 
-  function isPostFull(post){
-    var cap = capacityNumber(post);
-    if(cap === null) return false;
-    return (post.participants || []).length >= cap;
-  }
+      const [signupEmail, setSignupEmail] = useState('');
+      const [signupPassword, setSignupPassword] = useState('');
+      const [signupPasswordConfirm, setSignupPasswordConfirm] = useState('');
+      const [showSignupPassword, setShowSignupPassword] = useState(false);
+      const [showSignupPasswordConfirm, setShowSignupPasswordConfirm] = useState(false);
 
-  async function joinPost(post){
-    if(!state.currentUser){
-      showToast('참여하려면 로그인이 필요해요.');
-      return;
-    }
-    post.participants = post.participants || [];
-    var already = post.participants.some(function(p){
-      return p && typeof p === 'object' && p.id === state.currentUser.id;
-    });
-    if(already){
-      showToast('이미 참여했어요.');
-      return;
-    }
-    var cap = capacityNumber(post);
-    if(cap !== null && post.participants.length >= cap){
-      showToast('정원이 모두 찼어요.');
-      render();
-      return;
-    }
-    post.participants.push({ id: state.currentUser.id, nickname: state.currentUser.nickname });
-    try{
-      await storageSet(post.id, JSON.stringify(post), true);
-      showToast('참여 완료! 🎉');
-    }catch(e){
-      post.participants.pop();
-      showToast('참여 처리에 실패했어요. 다시 시도해주세요.');
-    }
-    render();
-  }
+      // 개설 폼
+      const [createTitle, setCreateTitle] = useState('');
+      const [createMaxMembers, setCreateMaxMembers] = useState(4);
+      const [createDesc, setCreateDesc] = useState('');
+      const [createDDayName, setCreateDDayName] = useState('');
+      const [createDDayDate, setCreateDDayDate] = useState('');
 
-  function regionPosts(){
-    return state.posts.filter(function(p){ return p.region === state.myRegion; });
-  }
+      // 지역 선택
+      const [sido, setSido] = useState('');
+      const [sigungu, setSigungu] = useState('');
+      const [dong, setDong] = useState('');
+      const [expandedSubjectCat, setExpandedSubjectCat] = useState('');
 
-  function displayedPosts(){
-    var posts = regionPosts();
-    if(state.gradeFilter === '전체') return posts;
-    return posts.filter(function(p){ return p.grade === state.gradeFilter || p.grade === '학년무관'; });
-  }
+      // 학생 인증 이미지
+      const [isUploadingID, setIsUploadingID] = useState(false);
+      const [uploadedFile, setUploadedFile] = useState(null);
+      const [uploadedFileUrl, setUploadedFileUrl] = useState(null);
+      const fileInputRef = useRef(null);
 
-  // ---------- render pieces ----------
+      const [messages, setMessages] = useState([]);
+      const [newMessage, setNewMessage] = useState('');
+      const chatScrollRef = useRef(null);
 
-  function renderAuthModal(){
-    var wrap = document.createElement('div');
-    wrap.className = 'modal-overlay';
+      const [userProfile, setUserProfile] = useState(null);
+      const [tempProfile, setTempProfile] = useState({
+        name: '', school: '', grade: '', subjects: [], publishers: [], style: '', times: [], place: ''
+      });
+      const [allGroups, setAllGroups] = useState([]);
+      const [selectedGroup, setSelectedGroup] = useState(null);
 
-    var card = document.createElement('div');
-    card.className = 'modal-card';
+      const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'alert', onConfirm: null });
+      const showModal = (title, message, type = 'alert', onConfirm = null) => setModal({ isOpen: true, title, message, type, onConfirm });
+      const closeModal = () => setModal({ ...modal, isOpen: false });
 
-    var pin = document.createElement('div');
-    pin.className = 'pin';
-    pin.style.background = 'var(--pin-blue)';
-    card.appendChild(pin);
+      const toggleArray = (arr = [], item) => arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item];
 
-    var isSignup = state.authMode === 'signup';
+      // --- [1. 인증 초기화 및 잠금장치] ---
+      useEffect(() => {
+        const initAuth = async () => {
+          try {
+            if (typeof window.__initial_auth_token !== 'undefined' && window.__initial_auth_token) await signInWithCustomToken(auth, window.__initial_auth_token);
+            else await signInAnonymously(auth); 
+          } catch (error) { console.error("Auth init error:", error); }
+        };
+        initAuth();
 
-    var title = document.createElement('div');
-    title.className = 'modal-title';
-    title.textContent = isSignup ? '회원가입' : '로그인';
-    card.appendChild(title);
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (!user) return; 
 
-    var desc = document.createElement('p');
-    desc.style.fontSize = '13px';
-    desc.style.color = 'var(--ink-soft)';
-    desc.style.marginTop = '-8px';
-    desc.textContent = '아이디와 비밀번호는 이 브라우저에만 저장돼요. 다른 기기에서는 다시 가입해야 해요.';
-    card.appendChild(desc);
+          setAuthUser(user);
+          let savedEmail = localStorage.getItem('studyzone_ui_email');
 
-    var form = document.createElement('form');
-
-    function field(labelText, inputEl, hint, isRequired){
-      var f = document.createElement('div');
-      f.className = 'field';
-      var l = document.createElement('label');
-      l.textContent = labelText;
-      if(isRequired){
-        var req = document.createElement('span');
-        req.className = 'req';
-        req.textContent = '*';
-        l.appendChild(req);
-      }
-      f.appendChild(l);
-      f.appendChild(inputEl);
-      if(hint){
-        var h = document.createElement('div');
-        h.className = 'field-hint';
-        h.textContent = hint;
-        f.appendChild(h);
-      }
-      return f;
-    }
-
-    var idInput = document.createElement('input');
-    idInput.type = 'text';
-    idInput.maxLength = 30;
-    idInput.autocomplete = 'username';
-    idInput.placeholder = '영문/숫자로 입력해주세요';
-    form.appendChild(field('아이디', idInput, null, true));
-
-    var nickInput = null;
-    var contactInput = null;
-    if(isSignup){
-      nickInput = document.createElement('input');
-      nickInput.type = 'text';
-      nickInput.maxLength = 20;
-      nickInput.placeholder = '게시판에 표시될 이름';
-      form.appendChild(field('닉네임', nickInput, null, true));
-
-      contactInput = document.createElement('input');
-      contactInput.type = 'text';
-      contactInput.maxLength = 100;
-      contactInput.placeholder = '오픈채팅 링크, 이메일 등 (선택)';
-      form.appendChild(field('연락 방법', contactInput, '글 작성 시 자동으로 채워져요', false));
-    }
-
-    var pwInput = document.createElement('input');
-    pwInput.type = 'password';
-    pwInput.maxLength = 64;
-    pwInput.autocomplete = isSignup ? 'new-password' : 'current-password';
-    pwInput.placeholder = '4자 이상';
-    form.appendChild(field('비밀번호', pwInput, null, true));
-
-    var pwConfirmInput = null;
-    if(isSignup){
-      pwConfirmInput = document.createElement('input');
-      pwConfirmInput.type = 'password';
-      pwConfirmInput.maxLength = 64;
-      pwConfirmInput.autocomplete = 'new-password';
-      pwConfirmInput.placeholder = '비밀번호를 한 번 더 입력해주세요';
-      form.appendChild(field('비밀번호 확인', pwConfirmInput, null, true));
-    }
-
-    var actions = document.createElement('div');
-    actions.className = 'modal-actions';
-    var submitBtn = document.createElement('button');
-    submitBtn.type = 'submit';
-    submitBtn.className = 'btn-primary';
-    submitBtn.style.flex = '1 1 100%';
-    submitBtn.textContent = isSignup ? '가입하고 시작하기' : '로그인';
-    actions.appendChild(submitBtn);
-    form.appendChild(actions);
-
-    [idInput, pwInput].concat(isSignup ? [nickInput, pwConfirmInput] : []).forEach(function(inp){
-      inp.addEventListener('input', function(){ inp.classList.remove('invalid'); });
-    });
-
-    form.addEventListener('submit', async function(e){
-      e.preventDefault();
-      var id = idInput.value.trim();
-      var pw = pwInput.value;
-
-      if(!id){ idInput.classList.add('invalid'); idInput.focus(); showToast('아이디를 입력해주세요.'); return; }
-      if(!pw || pw.length < 4){ pwInput.classList.add('invalid'); pwInput.focus(); showToast('비밀번호는 4자 이상이어야 해요.'); return; }
-
-      try{
-        if(isSignup){
-          var nick = nickInput.value.trim();
-          if(!nick){ nickInput.classList.add('invalid'); nickInput.focus(); showToast('닉네임을 입력해주세요.'); return; }
-          if(pw !== pwConfirmInput.value){ pwConfirmInput.classList.add('invalid'); pwConfirmInput.focus(); showToast('비밀번호가 서로 달라요.'); return; }
-
-          submitBtn.disabled = true;
-          submitBtn.textContent = '가입 중...';
-          var signupRes = await registerAccount(id, pw, nick, contactInput.value.trim());
-          if(!signupRes.ok){
-            submitBtn.disabled = false;
-            submitBtn.textContent = '가입하고 시작하기';
-            if(signupRes.reason === 'duplicate'){
-              idInput.classList.add('invalid');
-              idInput.focus();
-              showToast('이미 사용 중인 아이디예요.');
-            } else {
-              showToast('가입에 실패했어요. 다시 시도해주세요.');
+          try {
+            const accountRef = doc(db, 'artifacts', appId, 'users', user.uid, 'account', 'data');
+            const accountSnap = await getDoc(accountRef);
+            if (accountSnap.exists() && accountSnap.data().isUILoggedIn) {
+              savedEmail = accountSnap.data().email;
+              localStorage.setItem('studyzone_ui_email', savedEmail);
+            } else if (accountSnap.exists() && accountSnap.data().isUILoggedIn === false) {
+              savedEmail = null;
+              localStorage.removeItem('studyzone_ui_email');
             }
-            return;
+          } catch(e) { console.error("Account fetch error:", e); }
+
+          if (savedEmail) {
+            const profileRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+            try {
+              const profileSnap = await getDoc(profileRef);
+              if (profileSnap.exists()) {
+                setUserProfile(profileSnap.data());
+                setIsLoggedIn(true);
+                setCurrentView('home');
+              } else {
+                setIsLoggedIn(true);
+                setCurrentView('onboarding');
+              }
+            } catch (error) { console.error("Profile fetch error:", error); }
+          } else {
+            setIsLoggedIn(false);
           }
-          state.currentUser = { id: signupRes.account.id, nickname: signupRes.account.nickname, contact: signupRes.account.contact || '' };
-          showToast(signupRes.account.nickname + '님, 환영해요! 🎉');
-          render();
-        } else {
-          submitBtn.disabled = true;
-          submitBtn.textContent = '로그인 중...';
-          var loginRes = await loginAccount(id, pw);
-          if(!loginRes.ok){
-            submitBtn.disabled = false;
-            submitBtn.textContent = '로그인';
-            idInput.classList.add('invalid');
-            pwInput.classList.add('invalid');
-            showToast(loginRes.reason === 'notfound' ? '존재하지 않는 아이디예요.' : '비밀번호가 일치하지 않아요.');
-            return;
+          setIsAuthReady(true);
+        });
+        return () => unsubscribe();
+      }, []);
+
+      // --- [2. 데이터 동기화] ---
+      useEffect(() => {
+        if (!authUser || !isLoggedIn) return;
+
+        const groupsRef = collection(db, 'artifacts', appId, 'public', 'data', 'groups');
+        const unsubscribeGroups = onSnapshot(groupsRef, (snapshot) => {
+          const groupsData = [];
+          snapshot.forEach(doc => groupsData.push({ id: doc.id, ...doc.data() }));
+          setAllGroups(groupsData);
+        }, (error) => {
+          console.error("Groups fetch error:", error);
+        });
+        return () => unsubscribeGroups();
+      }, [authUser, isLoggedIn]);
+
+      useEffect(() => {
+        if (currentView === 'chat' && selectedGroup && authUser) {
+          const chatRef = collection(db, 'artifacts', appId, 'public', 'data', `chat_${selectedGroup.id}`);
+          const unsubscribeChat = onSnapshot(chatRef, (snapshot) => {
+            const msgs = [];
+            snapshot.forEach(doc => msgs.push({ id: doc.id, ...doc.data() }));
+            msgs.sort((a, b) => a.timestamp - b.timestamp);
+            setMessages(msgs);
+            setTimeout(() => { if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight; }, 100);
+          }, (error) => {
+             console.error("Chat fetch error:", error);
+          });
+          return () => unsubscribeChat();
+        }
+      }, [currentView, selectedGroup, authUser]);
+
+      // --- [핸들러: 분리된 회원가입 / 로그인] ---
+      const handleLogin = async (e) => {
+        e.preventDefault();
+        if (!loginEmail || !loginPassword) return showModal('알림', '이메일과 비밀번호를 모두 입력해주세요.');
+        
+        setIsProcessing(true);
+        try {
+          const accountRef = doc(db, 'artifacts', appId, 'users', authUser.uid, 'account', 'data');
+          const accountSnap = await getDoc(accountRef);
+
+          if (!accountSnap.exists() || accountSnap.data().email !== loginEmail || accountSnap.data().password !== loginPassword) {
+            setIsProcessing(false);
+            return showModal('로그인 실패', '가입되지 않은 이메일이거나 비밀번호가 일치하지 않습니다.');
           }
-          state.currentUser = { id: loginRes.account.id, nickname: loginRes.account.nickname, contact: loginRes.account.contact || '' };
-          showToast('다시 오셨네요, ' + loginRes.account.nickname + '님 👋');
-          render();
+
+          await updateDoc(accountRef, { isUILoggedIn: true });
+          localStorage.setItem('studyzone_ui_email', loginEmail);
+          
+          const profileRef = doc(db, 'artifacts', appId, 'users', authUser.uid, 'profile', 'data');
+          const profileSnap = await getDoc(profileRef);
+          if (profileSnap.exists()) {
+            setUserProfile(profileSnap.data());
+            setCurrentView('home');
+          } else {
+            setCurrentView('onboarding');
+          }
+          setIsLoggedIn(true);
+        } catch (error) {
+          showModal('오류', '로그인 처리 중 문제가 발생했습니다.');
         }
-      }catch(err){
-        console.error('auth error:', err);
-        submitBtn.disabled = false;
-        submitBtn.textContent = isSignup ? '가입하고 시작하기' : '로그인';
-        showToast('처리 중 문제가 생겼어요. 다시 시도해주세요.');
-      }
-    });
+        setIsProcessing(false);
+      };
 
-    card.appendChild(form);
+      const handleSignUp = async (e) => {
+        e.preventDefault();
+        if (!signupEmail || !signupPassword || !signupPasswordConfirm) return showModal('알림', '모든 항목을 입력해주세요.');
+        if (signupPassword.length < 6) return showModal('알림', '비밀번호는 6자리 이상이어야 합니다.');
+        if (signupPassword !== signupPasswordConfirm) return showModal('알림', '비밀번호 확인이 일치하지 않습니다.');
 
-    var toggle = document.createElement('div');
-    toggle.className = 'auth-toggle';
-    var toggleBtn = document.createElement('button');
-    toggleBtn.type = 'button';
-    toggleBtn.textContent = isSignup ? '이미 계정이 있어요 · 로그인' : '계정이 없어요 · 회원가입';
-    toggleBtn.addEventListener('click', function(){
-      state.authMode = isSignup ? 'login' : 'signup';
-      render();
-    });
-    toggle.appendChild(toggleBtn);
-    card.appendChild(toggle);
+        setIsProcessing(true);
+        try {
+          const accountRef = doc(db, 'artifacts', appId, 'users', authUser.uid, 'account', 'data');
+          const accountSnap = await getDoc(accountRef);
 
-    var resetRow = document.createElement('div');
-    resetRow.className = 'auth-toggle';
-    resetRow.style.marginTop = '4px';
-    var resetBtn = document.createElement('button');
-    resetBtn.type = 'button';
-    resetBtn.style.color = 'var(--ink-soft)';
-    resetBtn.style.textDecoration = 'none';
-    resetBtn.style.fontWeight = '400';
-    resetBtn.textContent = '저장된 로그인 정보 초기화';
-    resetBtn.addEventListener('click', function(){
-      if(confirm('이 브라우저에 저장된 아이디/비밀번호를 전부 삭제할까요? (게시글은 남아있어요)')){
-        resetAllAccounts();
-      }
-    });
-    resetRow.appendChild(resetBtn);
-    card.appendChild(resetRow);
+          if (accountSnap.exists() && accountSnap.data().email === signupEmail) {
+            setIsProcessing(false);
+            return showModal('가입 불가', '이미 등록된 이메일 계정이 존재합니다. 로그인 페이지를 이용해주세요.');
+          }
 
-    wrap.appendChild(card);
-    return wrap;
-  }
-
-  function renderRegionPickerModal(isFirstTime){
-    var wrap = document.createElement('div');
-    wrap.className = 'modal-overlay';
-    wrap.addEventListener('click', function(e){
-      if(e.target === wrap && !isFirstTime){ state.showRegionPicker = false; render(); }
-    });
-
-    var card = document.createElement('div');
-    card.className = 'modal-card';
-    card.style.maxWidth = '460px';
-
-    var pin = document.createElement('div');
-    pin.className = 'pin';
-    pin.style.background = 'var(--pin-mustard)';
-    card.appendChild(pin);
-
-    if(!isFirstTime){
-      var closeBtn = document.createElement('button');
-      closeBtn.className = 'close-x';
-      closeBtn.textContent = '✕';
-      closeBtn.addEventListener('click', function(){ state.showRegionPicker = false; render(); });
-      card.appendChild(closeBtn);
-    }
-
-    var title = document.createElement('div');
-    title.className = 'modal-title';
-    title.textContent = isFirstTime ? '어느 동네에 사시나요?' : '동네 변경하기';
-    card.appendChild(title);
-
-    var desc = document.createElement('p');
-    desc.style.fontSize = '13px';
-    desc.style.color = 'var(--ink-soft)';
-    desc.style.marginTop = '-8px';
-    desc.textContent = '선택한 지역의 스터디만 보여드리고, 글을 올릴 때도 이 지역으로 등록돼요.';
-    card.appendChild(desc);
-
-    var grid = document.createElement('div');
-    grid.className = 'region-grid';
-    REGIONS.forEach(function(r){
-      var b = document.createElement('button');
-      b.className = 'region-btn' + (state.myRegion === r ? ' selected' : '');
-      b.textContent = r;
-      b.addEventListener('click', function(){ setMyRegion(r); });
-      grid.appendChild(b);
-    });
-    card.appendChild(grid);
-
-    wrap.appendChild(card);
-    return wrap;
-  }
-
-  function renderCreateModal(){
-    var wrap = document.createElement('div');
-    wrap.className = 'modal-overlay';
-    wrap.addEventListener('click', function(e){
-      if(e.target === wrap){ state.showCreate = false; render(); }
-    });
-
-    var card = document.createElement('div');
-    card.className = 'modal-card';
-
-    var pin = document.createElement('div');
-    pin.className = 'pin';
-    pin.style.background = 'var(--pin-red)';
-    card.appendChild(pin);
-
-    var closeBtn = document.createElement('button');
-    closeBtn.className = 'close-x';
-    closeBtn.textContent = '✕';
-    closeBtn.addEventListener('click', function(){ state.showCreate = false; render(); });
-    card.appendChild(closeBtn);
-
-    var title = document.createElement('div');
-    title.className = 'modal-title';
-    title.textContent = state.myRegion + ' 스터디 올리기';
-    card.appendChild(title);
-
-    var form = document.createElement('form');
-
-    function field(labelText, inputEl, hint, isRequired){
-      var f = document.createElement('div');
-      f.className = 'field';
-      var l = document.createElement('label');
-      l.textContent = labelText;
-      if(isRequired){
-        var req = document.createElement('span');
-        req.className = 'req';
-        req.textContent = '*';
-        l.appendChild(req);
-      }
-      f.appendChild(l);
-      f.appendChild(inputEl);
-      if(hint){
-        var h = document.createElement('div');
-        h.className = 'field-hint';
-        h.textContent = hint;
-        f.appendChild(h);
-      }
-      return f;
-    }
-
-    var titleInput = document.createElement('input');
-    titleInput.type = 'text';
-    titleInput.maxLength = 40;
-    titleInput.placeholder = '예: 중간고사 대비 수학 같이 하실 분';
-    form.appendChild(field('제목', titleInput, null, true));
-
-    var row = document.createElement('div');
-    row.className = 'field-row';
-
-    var catSelect = document.createElement('select');
-    CATS.forEach(function(c){
-      var o = document.createElement('option');
-      o.value = c; o.textContent = c;
-      catSelect.appendChild(o);
-    });
-    row.appendChild(field('과목', catSelect));
-
-    var gradeSelect = document.createElement('select');
-    GRADES.forEach(function(g){
-      var o = document.createElement('option');
-      o.value = g; o.textContent = g;
-      gradeSelect.appendChild(o);
-    });
-    row.appendChild(field('학년', gradeSelect));
-
-    var capInput = document.createElement('input');
-    capInput.type = 'number';
-    capInput.min = 1; capInput.max = 50;
-    capInput.placeholder = '4';
-    row.appendChild(field('모집 인원', capInput));
-    form.appendChild(row);
-
-    var schedInput = document.createElement('input');
-    schedInput.type = 'text';
-    schedInput.maxLength = 60;
-    schedInput.placeholder = '예: 매주 화/목 저녁 8시, 스터디카페';
-    form.appendChild(field('모임 일정 및 장소', schedInput));
-
-    var descInput = document.createElement('textarea');
-    descInput.maxLength = 400;
-    descInput.placeholder = '어떤 스터디인지, 어떤 사람을 찾는지 편하게 적어주세요.';
-    form.appendChild(field('소개', descInput));
-
-    var row2 = document.createElement('div');
-    row2.className = 'field-row';
-
-    var nickInput = document.createElement('input');
-    nickInput.type = 'text';
-    nickInput.maxLength = 20;
-    nickInput.placeholder = '게시판에 표시될 이름';
-    if(state.currentUser) nickInput.value = state.currentUser.nickname;
-    row2.appendChild(field('닉네임', nickInput, '삭제할 때 필요해요', true));
-
-    var contactInput = document.createElement('input');
-    contactInput.type = 'text';
-    contactInput.maxLength = 100;
-    contactInput.placeholder = '오픈채팅 링크, 이메일 등';
-    if(state.currentUser && state.currentUser.contact) contactInput.value = state.currentUser.contact;
-    row2.appendChild(field('연락 방법', contactInput, null, true));
-    form.appendChild(row2);
-
-    var actions = document.createElement('div');
-    actions.className = 'modal-actions';
-    var cancelBtn = document.createElement('button');
-    cancelBtn.type = 'button';
-    cancelBtn.className = 'btn-secondary';
-    cancelBtn.textContent = '취소';
-    cancelBtn.addEventListener('click', function(){ state.showCreate = false; render(); });
-
-    var submitBtn = document.createElement('button');
-    submitBtn.type = 'submit';
-    submitBtn.className = 'btn-primary';
-    submitBtn.textContent = '게시판에 붙이기';
-
-    actions.appendChild(cancelBtn);
-    actions.appendChild(submitBtn);
-    form.appendChild(actions);
-
-    [titleInput, nickInput, contactInput].forEach(function(inp){
-      inp.addEventListener('input', function(){ inp.classList.remove('invalid'); });
-    });
-
-    form.addEventListener('submit', async function(e){
-      e.preventDefault();
-      var missing = [];
-      [[titleInput,'제목'], [nickInput,'닉네임'], [contactInput,'연락 방법']].forEach(function(pair){
-        if(!pair[0].value.trim()){
-          pair[0].classList.add('invalid');
-          missing.push(pair[1]);
-        } else {
-          pair[0].classList.remove('invalid');
+          await setDoc(accountRef, { email: signupEmail, password: signupPassword, isUILoggedIn: true });
+          localStorage.setItem('studyzone_ui_email', signupEmail);
+          setIsLoggedIn(true);
+          setCurrentView('onboarding');
+        } catch (error) {
+          showModal('오류', '회원가입 처리 중 문제가 발생했습니다.');
         }
-      });
-      if(missing.length){
-        showToast(missing.join(', ') + ' 항목을 입력해주세요.');
-        missing[0] === '제목' ? titleInput.focus() : (missing[0] === '닉네임' ? nickInput.focus() : contactInput.focus());
-        return;
+        setIsProcessing(false);
+      };
+
+      const handleLogout = () => {
+        showModal('로그아웃', '정말 로그아웃 하시겠습니까?', 'confirm', async () => {
+          try {
+            const accountRef = doc(db, 'artifacts', appId, 'users', authUser.uid, 'account', 'data');
+            await updateDoc(accountRef, { isUILoggedIn: false });
+          } catch(e) { console.error(e); }
+
+          localStorage.removeItem('studyzone_ui_email');
+          setUserProfile(null);
+          setLoginEmail('');
+          setLoginPassword('');
+          setSignupEmail('');
+          setSignupPassword('');
+          setSignupPasswordConfirm('');
+          setShowLoginPassword(false);
+          setShowSignupPassword(false);
+          setShowSignupPasswordConfirm(false);
+          setActiveTab('recommend');
+          setIsLoggedIn(false);
+        });
+      };
+
+      // --- [거리 계산 시뮬레이션 로직 (반경 5km 구현용)] ---
+      const getSimulatedDistance = (loc1, loc2) => {
+        if (!loc1 || !loc2) return 15.0;
+        const clean1 = loc1.trim();
+        const clean2 = loc2.trim();
+        if (clean1 === clean2) return 0.8;
+        const parts1 = clean1.split(' ');
+        const parts2 = clean2.split(' ');
+        if (parts1[0] === parts2[0] && parts1[1] === parts2[1]) return 3.2;
+        if (parts1[0] === parts2[0]) return 12.5; 
+        return 50.0;
+      };
+
+      // --- [핸들러: 온보딩 로직 & 유효성 체크] ---
+      const handleOnboardingNext = async () => {
+        if (onboardingStep === 1) {
+          const currentName = tempProfile.name || '';
+          const currentSchool = tempProfile.school || '';
+          const currentGrade = tempProfile.grade || '';
+
+          if (!currentName.trim()) return showModal('알림', '닉네임을 입력해주세요.');
+          if (!currentSchool.trim()) return showModal('알림', '학교 이름을 입력해주세요.');
+          if (!currentGrade) return showModal('알림', '학년을 선택해주세요.');
+          if (currentName.includes('/')) return showModal('경고', '닉네임에 특수문자는 사용할 수 없습니다.');
+          
+          setIsProcessing(true);
+          try {
+            const nickRef = doc(db, 'artifacts', appId, 'public', 'data', 'nicknames', currentName.trim());
+            const nickSnap = await getDoc(nickRef);
+            if (nickSnap.exists() && nickSnap.data().uid !== authUser?.uid) {
+              setIsProcessing(false);
+              return showModal('중복 알림', `'${currentName}'(은)는 이미 누군가 사용 중인 닉네임입니다.\n다른 닉네임을 입력해주세요.`);
+            }
+          } catch(e) { console.error("Nickname check error", e); }
+          setIsProcessing(false);
+        }
+
+        if (onboardingStep === 2 && (tempProfile.subjects || []).length === 0) {
+          return showModal('알림', '관심 있는 공부를 최소 1개 이상 선택해주세요.');
+        }
+        if (onboardingStep === 3 && (tempProfile.publishers || []).length === 0) {
+          return showModal('알림', '사용 중인 교과서나 참고서 출판사를 선택해주세요.');
+        }
+        if (onboardingStep === 4) {
+          if ((tempProfile.times || []).length === 0) return showModal('알림', '선호하는 시간대를 선택해주세요.');
+          if (!tempProfile.place) return showModal('알림', '선호하는 모임 장소를 선택해주세요.');
+        }
+        if (onboardingStep === 5 && !tempProfile.style) {
+          return showModal('알림', '선호하는 스터디 분위기를 선택해주세요.');
+        }
+
+        if (onboardingStep === 6) {
+          if (!sido || !sigungu || !dong.trim()) {
+            return showModal('알림', "지역(시/도, 시/군/구, 읍/면/동)을 모두 입력해주세요.");
+          }
+          setIsProcessing(true);
+          await handleSaveProfile();
+          setIsProcessing(false);
+          return;
+        }
+        
+        setOnboardingStep(prev => prev + 1);
+      };
+
+      const handleSaveProfile = async () => {
+        if (!authUser) return;
+        try {
+          const finalEmail = localStorage.getItem('studyzone_ui_email') || '';
+          const finalProfile = { 
+            ...tempProfile, 
+            name: (tempProfile.name || '').trim(), 
+            school: (tempProfile.school || '').trim(), 
+            location: `${sido} ${sigungu} ${dong.trim()}`.trim(), 
+            isStudentVerified: false, 
+            mannerScore: 36.5, 
+            email: finalEmail 
+          };
+          
+          const profileRef = doc(db, 'artifacts', appId, 'users', authUser.uid, 'profile', 'data');
+          await setDoc(profileRef, finalProfile);
+          
+          const nickRef = doc(db, 'artifacts', appId, 'public', 'data', 'nicknames', finalProfile.name);
+          await setDoc(nickRef, { uid: authUser.uid });
+
+          setUserProfile(finalProfile);
+          setCurrentView('home');
+        } catch (error) {
+          showModal('오류', '프로필 저장 중 문제가 발생했습니다.');
+        }
+      };
+
+      // --- [핸들러: 프로필 수정 로직] ---
+      const handleOpenEditProfile = () => {
+        setTempProfile({ ...userProfile });
+        const locationParts = (userProfile.location || '').split(' ');
+        setSido(locationParts[0] || '');
+        setSigungu(locationParts[1] || '');
+        setDong(locationParts.slice(2).join(' ') || '');
+        setExpandedSubjectCat('');
+        setCurrentView('editProfile');
+      };
+
+      const handleUpdateProfile = async () => {
+        const currentName = tempProfile.name || '';
+        const currentSchool = tempProfile.school || '';
+
+        if (!currentName.trim()) return showModal('알림', '닉네임을 입력해주세요.');
+        if (!currentSchool.trim()) return showModal('알림', '학교 이름을 입력해주세요.');
+        if (!sido || !sigungu || !dong.trim()) return showModal('알림', "지역(시/도, 시/군/구, 읍/면/동)을 모두 입력해주세요.");
+        
+        setIsProcessing(true);
+        try {
+          if (currentName !== userProfile.name) {
+            const nickRef = doc(db, 'artifacts', appId, 'public', 'data', 'nicknames', currentName.trim());
+            const nickSnap = await getDoc(nickRef);
+            if (nickSnap.exists() && nickSnap.data().uid !== authUser?.uid) {
+              setIsProcessing(false);
+              return showModal('중복 알림', `'${currentName}'(은)는 이미 누군가 사용 중인 닉네임입니다.\n다른 닉네임을 입력해주세요.`);
+            }
+            await setDoc(nickRef, { uid: authUser.uid });
+          }
+
+          const updatedProfile = {
+            ...userProfile, 
+            ...tempProfile,
+            name: currentName.trim(),
+            school: currentSchool.trim(),
+            location: `${sido} ${sigungu} ${dong.trim()}`.trim(),
+          };
+
+          const profileRef = doc(db, 'artifacts', appId, 'users', authUser.uid, 'profile', 'data');
+          await updateDoc(profileRef, updatedProfile);
+
+          setUserProfile(updatedProfile);
+          showModal('수정 완료', '프로필이 성공적으로 업데이트 되었습니다.');
+          setCurrentView('home');
+          setActiveTab('profile'); 
+        } catch (error) {
+          showModal('오류', '프로필 업데이트 중 문제가 발생했습니다.');
+        }
+        setIsProcessing(false);
+      };
+
+      // --- [핸들러: 학생증 인증 실제 파일 업로드 로직] ---
+      const handleFileChange = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          setUploadedFile(file);
+          setUploadedFileUrl(URL.createObjectURL(file));
+        }
+      };
+
+      const handleVerifyStudentSubmit = () => {
+        if (!uploadedFile) {
+          return showModal('알림', '학생증 등 증빙 서류 이미지를 업로드해주세요.');
+        }
+        setIsUploadingID(true);
+        
+        setTimeout(async () => {
+          try {
+            const profileRef = doc(db, 'artifacts', appId, 'users', authUser.uid, 'profile', 'data');
+            await updateDoc(profileRef, { isStudentVerified: true });
+            
+            setUserProfile(prev => ({ ...prev, isStudentVerified: true }));
+            setIsUploadingID(false);
+            setUploadedFile(null);
+            setUploadedFileUrl(null);
+            
+            showModal('인증 승인 완료 🎉', '학생 인증이 성공적으로 완료되어 배지가 부여되었습니다!\n이제 더욱 신뢰도 높은 스터디 매칭이 가능합니다.');
+            setCurrentView('home');
+            setActiveTab('profile');
+          } catch (error) {
+            setIsUploadingID(false);
+            showModal('오류', '인증 처리 중 문제가 발생했습니다.');
+          }
+        }, 1500);
+      };
+
+      // --- [핸들러: 스터디 기능] ---
+      const handleCreateGroup = async () => {
+        if (!authUser || !userProfile) return;
+        
+        if (!createTitle.trim()) return showModal('알림', '스터디 제목을 입력해주세요.');
+        if (!createDesc.trim()) return showModal('알림', '상세 설명 및 규칙을 입력해주세요.');
+
+        setIsProcessing(true);
+        try {
+          const groupsRef = collection(db, 'artifacts', appId, 'public', 'data', 'groups');
+          const newGroupData = {
+            title: createTitle, maxMembers: createMaxMembers, description: createDesc,
+            grade: userProfile.grade || '미설정', subjects: userProfile.subjects || [],
+            publishers: userProfile.publishers || [], style: userProfile.style || '미설정',
+            location: userProfile.location || '미설정', place: userProfile.place || '스터디카페', times: userProfile.times || [],
+            targetDDayName: createDDayName, targetDDayDate: createDDayDate, status: 'open',
+            notice: '환영합니다! 공지사항을 등록해주세요.', tags: [userProfile.subjects?.[0]?.split('(')[0] || '스터디', '신규개설'],
+            hostId: authUser.uid, currentMembers: 1,
+            members: [{ uid: authUser.uid, name: userProfile.name, grade: userProfile.grade, role: 'host', mannerScore: userProfile.mannerScore, isStudentVerified: userProfile.isStudentVerified }],
+            createdAt: new Date().toISOString()
+          };
+          await addDoc(groupsRef, newGroupData);
+          setCreateTitle(''); setCreateDesc(''); setCreateDDayName(''); setCreateDDayDate('');
+          setCurrentView('home');
+          setActiveTab('myGroups');
+        } catch (error) { showModal('오류', '그룹 생성 실패'); }
+        setIsProcessing(false);
+      };
+
+      const handleJoinGroup = async () => {
+        if (!authUser || !userProfile || !selectedGroup) return;
+        const liveGroup = allGroups.find(g => g.id === selectedGroup.id) || selectedGroup;
+        if (liveGroup.status === 'closed' || liveGroup.currentMembers >= liveGroup.maxMembers) return showModal('마감', '현재 모집이 마감된 스터디입니다.');
+        
+        setIsProcessing(true);
+        const groupRef = doc(db, 'artifacts', appId, 'public', 'data', 'groups', selectedGroup.id);
+        await updateDoc(groupRef, {
+          currentMembers: selectedGroup.currentMembers + 1,
+          members: arrayUnion({ uid: authUser.uid, name: userProfile.name, grade: userProfile.grade, role: 'member', mannerScore: userProfile.mannerScore, isStudentVerified: userProfile.isStudentVerified })
+        });
+        showModal('가입 완료 🎉', '성공적으로 가입되었습니다!\n채팅방에서 인사를 건네보세요.');
+        setIsProcessing(false);
+        setCurrentView('home');
+        setActiveTab('myGroups');
+      };
+
+      const handleLeaveGroup = async () => {
+        if (!authUser || !selectedGroup) return;
+        showModal('스터디 탈퇴', '정말로 이 스터디에서 탈퇴하시겠습니까?', 'confirm', async () => {
+          try {
+            const liveGroup = allGroups.find(g => g.id === selectedGroup.id);
+            const updatedMembers = liveGroup.members.filter(m => m.uid !== authUser.uid);
+            const groupRef = doc(db, 'artifacts', appId, 'public', 'data', 'groups', selectedGroup.id);
+            await updateDoc(groupRef, { currentMembers: updatedMembers.length, members: updatedMembers });
+            setCurrentView('home');
+          } catch(e) { showModal('오류', '탈퇴 처리 중 문제가 발생했습니다.'); }
+        });
+      };
+
+      const handleKickMember = async (memberUid, memberName) => {
+        showModal('멤버 내보내기', `'${memberName}'님을 스터디에서 정말 내보내시겠습니까?`, 'confirm', async () => {
+          const liveGroup = allGroups.find(g => g.id === selectedGroup.id);
+          const updatedMembers = liveGroup.members.filter(m => m.uid !== memberUid);
+          const groupRef = doc(db, 'artifacts', appId, 'public', 'data', 'groups', selectedGroup.id);
+          await updateDoc(groupRef, { currentMembers: updatedMembers.length, members: updatedMembers });
+          const chatRef = collection(db, 'artifacts', appId, 'public', 'data', `chat_${selectedGroup.id}`);
+          await addDoc(chatRef, { text: `📢 ${memberName}님이 스터디에서 나갔습니다.`, uid: 'system', name: '시스템', timestamp: Date.now() });
+        });
+      };
+
+      const handleToggleStatus = async () => {
+        const liveGroup = allGroups.find(g => g.id === selectedGroup.id);
+        const groupRef = doc(db, 'artifacts', appId, 'public', 'data', 'groups', selectedGroup.id);
+        await updateDoc(groupRef, { status: liveGroup.status === 'open' ? 'closed' : 'open' });
+      };
+
+      const handleSendMessage = async (e) => {
+        e.preventDefault();
+        if (!newMessage.trim() || !authUser || !userProfile || !selectedGroup) return;
+        const chatRef = collection(db, 'artifacts', appId, 'public', 'data', `chat_${selectedGroup.id}`);
+        await addDoc(chatRef, { text: newMessage, uid: authUser.uid, name: userProfile.name, timestamp: Date.now() });
+        setNewMessage('');
+      };
+
+      // ==========================================
+      // UI 렌더링 섹션
+      // ==========================================
+
+      const CustomModal = () => {
+        if (!modal.isOpen) return null;
+        return (
+          <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-fade-in-up">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-3"><AlertCircle className="w-6 h-6 text-indigo-600" /><h3 className="text-lg font-bold text-gray-900">{modal.title}</h3></div>
+                <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{modal.message}</p>
+              </div>
+              <div className="flex border-t border-gray-100 bg-gray-50">
+                {modal.type === 'confirm' && <button onClick={closeModal} className="flex-1 py-4 text-gray-500 font-bold text-sm border-r border-gray-100 hover:bg-gray-100">취소</button>}
+                <button onClick={() => { closeModal(); if (modal.onConfirm) modal.onConfirm(); }} className="flex-1 py-4 text-indigo-600 font-bold text-sm hover:bg-indigo-50">확인</button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      if (!isAuthReady) {
+        return (
+          <div className="max-w-md mx-auto h-screen bg-white flex flex-col items-center justify-center sm:border-x sm:border-gray-200">
+            <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+            <p className="text-gray-500 font-medium text-sm">StudyZone 정보를 불러오는 중...</p>
+          </div>
+        );
       }
-      submitBtn.disabled = true;
-      submitBtn.textContent = '등록 중...';
-      var ok = await createPost({
-        title: titleInput.value.trim(),
-        category: catSelect.value,
-        grade: gradeSelect.value,
-        schedule: schedInput.value.trim() || '일정 협의',
-        capacity: capInput.value ? capInput.value : '인원 협의',
-        description: descInput.value.trim(),
-        nickname: nickInput.value.trim(),
-        contact: contactInput.value.trim()
-      });
-      if(!ok){
-        submitBtn.disabled = false;
-        submitBtn.textContent = '게시판에 붙이기';
-      }
-    });
 
-    card.appendChild(form);
-    wrap.appendChild(card);
-    return wrap;
-  }
+      // --- [과목 선택 아코디언 UI] ---
+      const renderSubjectSelector = () => {
+        const isMiddleSchool = ['중1', '중2', '중3'].includes(tempProfile.grade);
+        const categoryData = isMiddleSchool ? SUBJECT_CATEGORIES.중등 : SUBJECT_CATEGORIES.고등;
 
-  function renderDetailModal(post){
-    var wrap = document.createElement('div');
-    wrap.className = 'modal-overlay';
-    wrap.addEventListener('click', function(e){
-      if(e.target === wrap){ state.detailPost = null; render(); }
-    });
+        return (
+          <div className="space-y-3 animate-fade-in-up">
+            <p className="text-sm text-gray-500 font-medium mb-1">
+              현재 선택된 학년(<span className="font-bold text-indigo-600">{tempProfile.grade}</span>)에 맞는 과목 리스트입니다.
+            </p>
+            <div className="space-y-3">
+              {Object.entries(categoryData).map(([category, subjects]) => {
+                const selectedCount = subjects.filter(s => (tempProfile.subjects || []).includes(s)).length;
+                const isExpanded = expandedSubjectCat === category;
 
-    var card = document.createElement('div');
-    card.className = 'modal-card';
+                return (
+                  <div key={category} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm transition-all bg-white">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedSubjectCat(isExpanded ? '' : category)}
+                      className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      <span className="font-bold text-gray-800">{category}</span>
+                      <div className="flex items-center gap-2">
+                        {selectedCount > 0 && <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full font-bold">{selectedCount}개 선택됨</span>}
+                        {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
+                      </div>
+                    </button>
+                    {isExpanded && (
+                      <div className="p-4 flex flex-wrap gap-2 border-t border-gray-100">
+                        {subjects.map(subject => {
+                          const isSelected = (tempProfile.subjects || []).includes(subject);
+                          return (
+                            <button
+                              key={subject}
+                              onClick={() => setTempProfile(p => ({...p, subjects: toggleArray(p.subjects, subject)}))}
+                              className={`px-3 py-2 rounded-full border text-xs font-bold transition-colors ${isSelected ? 'border-indigo-600 bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50'}`}
+                            >
+                              {subject}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      };
 
-    var pin = document.createElement('div');
-    pin.className = 'pin';
-    pin.style.background = 'var(--pin-teal)';
-    card.appendChild(pin);
+      // --- [화면: 로그인 전용 뷰] ---
+      const renderLogin = () => (
+        <div className="flex flex-col h-full bg-white px-6 py-12 relative overflow-y-auto overflow-x-hidden">
+          <div className="absolute top-[-50px] left-[-50px] w-48 h-48 bg-indigo-100 rounded-full mix-blend-multiply blur-2xl opacity-70 animate-blob"></div>
+          <div className="absolute top-[20%] right-[-50px] w-64 h-64 bg-blue-100 rounded-full mix-blend-multiply blur-2xl opacity-70 animate-blob animation-delay-2000"></div>
+          
+          <div className="flex-1 flex flex-col justify-center items-center z-10 relative">
+            <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mb-5 shadow-xl shadow-indigo-200 transform -rotate-6"><BookOpen className="w-8 h-8 text-white" /></div>
+            <h1 className="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">StudyZone</h1>
+            <p className="text-gray-500 text-sm font-medium text-center mb-10">우리 동네 믿을 수 있는 스터디 매칭</p>
+            
+            <form onSubmit={handleLogin} className="w-full space-y-4">
+              <div className="space-y-3">
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input 
+                    type="email" placeholder="이메일 주소" required 
+                    className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-indigo-500 text-sm transition-all" 
+                    value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} 
+                  />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input 
+                    type={showLoginPassword ? 'text' : 'password'} placeholder="비밀번호" required 
+                    className="w-full pl-12 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-indigo-500 text-sm transition-all" 
+                    value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} 
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                  >
+                    {showLoginPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+              <button type="submit" disabled={isProcessing} className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-3.5 px-4 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all mt-2 disabled:bg-gray-400 disabled:shadow-none">
+                {isProcessing ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <><LogIn className="w-5 h-5" /> 로그인하기</>}
+              </button>
+            </form>
+          </div>
+          
+          <div className="pt-6 pb-2 text-center z-10 relative bg-white mt-auto">
+            <p className="text-sm text-gray-500">아직 계정이 없으신가요?<button type="button" onClick={() => setCurrentView('signup')} className="ml-2 font-bold text-indigo-600 hover:underline">회원가입하기</button></p>
+          </div>
+        </div>
+      );
 
-    var closeBtn = document.createElement('button');
-    closeBtn.className = 'close-x';
-    closeBtn.textContent = '✕';
-    closeBtn.addEventListener('click', function(){ state.detailPost = null; render(); });
-    card.appendChild(closeBtn);
+      // --- [화면: 회원가입 전용 뷰] ---
+      const renderSignUp = () => (
+        <div className="flex flex-col h-full bg-white px-6 py-12 relative overflow-y-auto overflow-x-hidden">
+          <button onClick={() => setCurrentView('login')} className="absolute top-6 left-4 p-2 z-20 text-gray-600"><ArrowLeft className="w-6 h-6"/></button>
+          <div className="flex-1 flex flex-col justify-center z-10 relative mt-4">
+            <h1 className="text-3xl font-extrabold text-gray-900 mb-2">시작하기</h1>
+            <p className="text-gray-500 text-sm font-medium mb-8">StudyZone 이메일 회원가입</p>
+            
+            <form onSubmit={handleSignUp} className="w-full space-y-4">
+              <div className="space-y-3">
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input 
+                    type="email" placeholder="이메일 주소" required 
+                    className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-indigo-500 text-sm transition-all" 
+                    value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} 
+                  />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input 
+                    type={showSignupPassword ? 'text' : 'password'} placeholder="비밀번호 (6자리 이상)" required minLength={6} 
+                    className="w-full pl-12 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-indigo-500 text-sm transition-all" 
+                    value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} 
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowSignupPassword(!showSignupPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                  >
+                    {showSignupPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input 
+                    type={showSignupPasswordConfirm ? 'text' : 'password'} placeholder="비밀번호 확인" required minLength={6} 
+                    className="w-full pl-12 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:bg-white focus:border-indigo-500 text-sm transition-all" 
+                    value={signupPasswordConfirm} onChange={(e) => setSignupPasswordConfirm(e.target.value)} 
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowSignupPasswordConfirm(!showSignupPasswordConfirm)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                  >
+                    {showSignupPasswordConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+              <button type="submit" disabled={isProcessing} className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white py-3.5 px-4 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all mt-4 disabled:bg-gray-400 disabled:shadow-none">
+                {isProcessing ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <><UserPlus className="w-5 h-5" /> 새 계정 만들기</>}
+              </button>
+            </form>
+          </div>
+        </div>
+      );
 
-    var badges = document.createElement('div');
-    badges.className = 'flyer-badges';
-    var cat = document.createElement('span');
-    cat.className = 'flyer-cat';
-    cat.textContent = post.category;
-    badges.appendChild(cat);
-    if(post.grade){
-      var grade = document.createElement('span');
-      grade.className = 'flyer-grade';
-      grade.textContent = post.grade;
-      badges.appendChild(grade);
+      // --- [화면: 온보딩 (회원가입 초기설정)] ---
+      const renderOnboarding = () => {
+        const totalSteps = 6;
+        return (
+          <div className="flex flex-col h-full bg-white px-6 py-8 relative">
+            {onboardingStep > 1 && (
+              <button 
+                onClick={() => setOnboardingStep(prev => prev - 1)} 
+                className="absolute top-8 left-4 p-2 text-gray-500 hover:text-gray-900 transition-colors z-20"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+            )}
+
+            <div className="flex-1 overflow-y-auto pb-4 pt-10">
+              <div className="mb-8">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  {onboardingStep === 1 && "기본 정보를 알려주세요 👋"}
+                  {onboardingStep === 2 && "어떤 공부를 하시나요? 📚"}
+                  {onboardingStep === 3 && "사용 중인 교과서는? 📖"}
+                  {onboardingStep === 4 && "선호하는 장소와 시간 ⏰"}
+                  {onboardingStep === 5 && "어떤 분위기를 선호하나요? ✨"}
+                  {onboardingStep === 6 && "동네를 설정해주세요 📍"}
+                </h1>
+              </div>
+              <div className="mb-8 flex space-x-2">
+                {[1,2,3,4,5,6].map((idx) => (<div key={idx} className={`h-1.5 flex-1 rounded-full transition-colors ${onboardingStep >= idx ? 'bg-indigo-600' : 'bg-gray-100'}`} />))}
+              </div>
+
+              {onboardingStep === 1 && (
+                <div className="space-y-8 animate-fade-in-up">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-3">닉네임</label>
+                    <input type="text" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500" value={tempProfile.name || ''} onChange={(e) => setTempProfile({...tempProfile, name: e.target.value})} placeholder="예: 열공라이언"/>
+                    <p className="text-xs text-gray-500 mt-2 font-medium">※ 중복된 닉네임은 사용할 수 없습니다.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-3">학교</label>
+                    <div className="relative">
+                      <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input type="text" className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500" value={tempProfile.school || ''} onChange={(e) => setTempProfile({...tempProfile, school: e.target.value})} placeholder="예: 한국고등학교"/>
+                    </div>
+                  </div>
+                  <div><label className="block text-sm font-bold text-gray-700 mb-3">현재 학년</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {['중1', '중2', '중3', '고1', '고2', '고3', 'N수'].map(g => (
+                        <button 
+                          key={g} 
+                          onClick={() => {
+                            setTempProfile(prev => {
+                              const isPrevMiddle = ['중1', '중2', '중3'].includes(prev.grade);
+                              const isNewMiddle = ['중1', '중2', '중3'].includes(g);
+                              return { ...prev, grade: g, subjects: (isPrevMiddle !== isNewMiddle) ? [] : prev.subjects };
+                            });
+                            setExpandedSubjectCat('');
+                          }} 
+                          className={`py-3 rounded-xl border font-medium text-sm ${tempProfile.grade === g ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-200'}`}
+                        >
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {onboardingStep === 2 && renderSubjectSelector()}
+              {onboardingStep === 3 && (
+                <div className="grid grid-cols-2 gap-3 animate-fade-in-up">
+                  {PUBLISHERS.map(p => (
+                      <button key={p} onClick={() => setTempProfile(prev => {
+                        let prevPubs = prev.publishers || [];
+                        if (p === '선택 안 함') return { ...prev, publishers: ['선택 안 함'] };
+                        let newPubs = prevPubs.filter(x => x !== '선택 안 함');
+                        if (newPubs.includes(p)) newPubs = newPubs.filter(x => x !== p); else newPubs = [...newPubs, p];
+                        return { ...prev, publishers: newPubs };
+                      })} className={`p-4 rounded-xl border text-left flex items-center justify-between ${(tempProfile.publishers || []).includes(p) ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200'}`}><span className="font-bold text-sm">{p}</span>{(tempProfile.publishers || []).includes(p) && <Check className="w-4 h-4 text-indigo-600" />}</button>
+                  ))}
+                </div>
+              )}
+              {onboardingStep === 4 && (
+                <div className="space-y-6 animate-fade-in-up">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-1"><Clock className="w-4 h-4"/>주로 스터디 할 시간대</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {TIME_SLOTS.map(t => (<button key={t} onClick={() => setTempProfile(p => ({...p, times: toggleArray(p.times, t)}))} className={`py-3 rounded-xl border text-sm font-bold ${(tempProfile.times || []).includes(t) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200'}`}>{t}</button>))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-1"><Coffee className="w-4 h-4"/>선호하는 모임 장소</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PLACE_PREFS.map(p => (<button key={p} onClick={() => setTempProfile({...tempProfile, place: p})} className={`py-3 rounded-xl border text-sm font-bold ${tempProfile.place === p ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'bg-white text-gray-600 border-gray-200'}`}>{p}</button>))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {onboardingStep === 5 && (
+                <div className="grid grid-cols-1 gap-3 animate-fade-in-up">
+                  {[{ id: '조용히 집중 (모각공)', title: '🤫 조용히 집중 (모각공)' }, { id: '자유로운 질의응답', title: '🙋‍♂️ 자유로운 질의응답' }, { id: '개념 설명 (하브루타)', title: '🗣️ 개념 설명 (하브루타)' }, { id: '진도/출석 엄격 인증', title: '✅ 진도/출석 엄격 인증' }].map(s => (<button key={s.id} onClick={() => setTempProfile({...tempProfile, style: s.id})} className={`p-4 rounded-2xl border text-left text-sm font-bold ${tempProfile.style === s.id ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-200'}`}>{s.title}</button>))}
+                </div>
+              )}
+              {onboardingStep === 6 && (
+                <div className="animate-fade-in-up space-y-6">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">동네 설정</label>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <select 
+                          className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 font-medium text-sm text-gray-800"
+                          value={sido}
+                          onChange={(e) => { setSido(e.target.value); setSigungu(''); }}
+                        >
+                          <option value="">시/도 선택</option>
+                          {Object.keys(REGIONS).map(region => (<option key={region} value={region}>{region}</option>))}
+                        </select>
+                        <select 
+                          className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 font-medium text-sm disabled:opacity-50 text-gray-800"
+                          value={sigungu} disabled={!sido}
+                          onChange={(e) => setSigungu(e.target.value)}
+                        >
+                          <option value="">시/군/구 선택</option>
+                          {sido && REGIONS[sido].map(city => (<option key={city} value={city}>{city}</option>))}
+                        </select>
+                      </div>
+                      <div>
+                        <input 
+                          type="text" 
+                          className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 text-sm"
+                          placeholder="읍/면/동 직접 입력 (예: 역삼동, 신장읍)"
+                          value={dong}
+                          onChange={(e) => setDong(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-start gap-3"><BadgeCheck className="w-6 h-6 text-indigo-600 flex-shrink-0" /><p className="text-sm text-indigo-800 leading-relaxed">마이페이지에서 학생증을 인증하면 <strong>'학생 인증 배지'</strong>가 부여되어, 더욱 신뢰할 수 있는 스터디 매칭이 시작됩니다.</p></div>
+                </div>
+              )}
+            </div>
+            
+            <div className="pt-4 border-t border-gray-50 bg-white flex gap-3">
+              {onboardingStep > 1 && (
+                <button 
+                  onClick={() => setOnboardingStep(prev => prev - 1)} 
+                  disabled={isProcessing}
+                  className="w-1/3 py-4 bg-gray-100 text-gray-700 rounded-xl font-bold text-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  이전
+                </button>
+              )}
+              <button 
+                onClick={handleOnboardingNext} 
+                disabled={isProcessing} 
+                className="flex-1 flex items-center justify-center py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg disabled:opacity-70 transition-all shadow-md shadow-indigo-200"
+              >
+                {isProcessing ? <Loader2 className="w-6 h-6 animate-spin text-white" /> : (onboardingStep < totalSteps ? '다음 단계로' : '가입 완료하고 시작하기')}
+              </button>
+            </div>
+          </div>
+        );
+      };
+
+      // --- [화면: 프로필 수정 (마이페이지)] ---
+      const renderEditProfile = () => {
+        return (
+          <div className="flex flex-col h-full bg-white relative">
+            <div className="pt-12 pb-4 px-4 sticky top-0 bg-white z-10 flex items-center justify-between border-b border-gray-100">
+              <div className="flex items-center">
+                <button onClick={() => setCurrentView('home')} className="p-2 mr-1"><ArrowLeft className="w-6 h-6 text-gray-800" /></button>
+                <h2 className="text-lg font-bold">프로필 수정</h2>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-32">
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-gray-900 border-b pb-2">기본 정보</h3>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">닉네임</label>
+                  <input type="text" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 text-sm" value={tempProfile.name || ''} onChange={(e) => setTempProfile({...tempProfile, name: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">학교</label>
+                  <input type="text" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 text-sm" value={tempProfile.school || ''} onChange={(e) => setTempProfile({...tempProfile, school: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">동네 설정</label>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                        <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 font-medium text-sm text-gray-800" value={sido} onChange={(e) => { setSido(e.target.value); setSigungu(''); }}>
+                          <option value="">시/도 선택</option>
+                          {Object.keys(REGIONS).map(region => (<option key={region} value={region}>{region}</option>))}
+                        </select>
+                        <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 font-medium text-sm disabled:opacity-50 text-gray-800" value={sigungu} disabled={!sido} onChange={(e) => setSigungu(e.target.value)}>
+                          <option value="">시/군/구 선택</option>
+                          {sido && REGIONS[sido].map(city => (<option key={city} value={city}>{city}</option>))}
+                        </select>
+                    </div>
+                    <div>
+                      <input type="text" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 text-sm" placeholder="읍/면/동 직접 입력 (예: 역삼동)" value={dong} onChange={(e) => setDong(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">학년</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['중1', '중2', '중3', '고1', '고2', '고3', 'N수'].map(g => (
+                      <button 
+                        key={g} 
+                        onClick={() => {
+                          setTempProfile(prev => {
+                            const isPrevMiddle = ['중1', '중2', '중3'].includes(prev.grade);
+                            const isNewMiddle = ['중1', '중2', '중3'].includes(g);
+                            return { ...prev, grade: g, subjects: (isPrevMiddle !== isNewMiddle) ? [] : prev.subjects };
+                          });
+                          setExpandedSubjectCat('');
+                        }} 
+                        className={`px-3 py-2 rounded-lg border font-medium text-xs ${tempProfile.grade === g ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-200'}`}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-gray-900 border-b pb-2">학습 정보</h3>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">관심 과목</label>
+                  {renderSubjectSelector()}
+                </div>
+                <div className="pt-2">
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">주요 교과서/출판사</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {PUBLISHERS.map(p => (<button key={p} onClick={() => setTempProfile(prev => { let prevPubs = prev.publishers || []; if (p === '선택 안 함') return { ...prev, publishers: ['선택 안 함'] }; let newPubs = prevPubs.filter(x => x !== '선택 안 함'); if (newPubs.includes(p)) newPubs = newPubs.filter(x => x !== p); else newPubs = [...newPubs, p]; return { ...prev, publishers: newPubs }; })} className={`p-3 rounded-lg border text-left flex items-center justify-between text-xs ${(tempProfile.publishers || []).includes(p) ? 'border-indigo-600 bg-indigo-50 text-indigo-700 font-bold' : 'border-gray-200'}`}>{p}{(tempProfile.publishers || []).includes(p) && <Check className="w-3 h-3 text-indigo-600" />}</button>))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-gray-900 border-b pb-2">스터디 성향</h3>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">주 시간대</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {TIME_SLOTS.map(t => (<button key={t} onClick={() => setTempProfile(p => ({...p, times: toggleArray(p.times, t)}))} className={`py-2 rounded-lg border text-xs font-bold ${(tempProfile.times || []).includes(t) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200'}`}>{t}</button>))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">선호 장소</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {PLACE_PREFS.map(p => (<button key={p} onClick={() => setTempProfile({...tempProfile, place: p})} className={`py-2 rounded-lg border text-xs font-bold ${tempProfile.place === p ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'bg-white text-gray-600 border-gray-200'}`}>{p}</button>))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1.5">스터디 분위기</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {[{ id: '조용히 집중 (모각공)', title: '🤫 조용히 집중 (모각공)' }, { id: '자유로운 질의응답', title: '🙋‍♂️ 자유로운 질의응답' }, { id: '개념 설명 (하브루타)', title: '🗣️ 개념 설명 (하브루타)' }, { id: '진도/출석 엄격 인증', title: '✅ 진도/출석 엄격 인증' }].map(s => (<button key={s.id} onClick={() => setTempProfile({...tempProfile, style: s.id})} className={`p-3 rounded-xl border text-left text-sm font-bold ${tempProfile.style === s.id ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-200'}`}>{s.title}</button>))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="absolute bottom-0 w-full p-4 bg-white border-t border-gray-100 pb-safe shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
+              <button disabled={isProcessing} onClick={handleUpdateProfile} className="w-full flex items-center justify-center py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg disabled:bg-gray-400 shadow-lg shadow-indigo-200 transition-colors">
+                {isProcessing ? <Loader2 className="w-6 h-6 animate-spin text-white" /> : '변경사항 저장하기'}
+              </button>
+            </div>
+          </div>
+        );
+      };
+
+      // --- [화면: 학생증 인증 업로드] ---
+      const renderVerifyStudent = () => {
+        return (
+          <div className="flex flex-col h-full bg-white relative">
+            <div className="pt-12 pb-4 px-4 sticky top-0 bg-white z-10 flex items-center justify-between border-b border-gray-100">
+              <div className="flex items-center">
+                <button onClick={() => setCurrentView('home')} className="p-2 mr-1"><ArrowLeft className="w-6 h-6 text-gray-800" /></button>
+                <h2 className="text-lg font-bold">학생 인증하기</h2>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="bg-indigo-50 p-4 rounded-xl">
+                <h3 className="font-bold text-indigo-900 mb-1 flex items-center gap-1.5"><BadgeCheck className="w-5 h-5"/> 신뢰할 수 있는 스터디존</h3>
+                <p className="text-sm text-indigo-700 leading-relaxed">
+                  본인 확인 및 학교/학년 정보가 명시된 <strong>학생증, 재학증명서, 모의고사 성적표</strong> 등을 업로드해주세요. 인증이 완료되면 프로필에 공식 인증 배지가 부여됩니다.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3">이미지 업로드</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  onChange={handleFileChange} 
+                />
+                <div 
+                  onClick={() => fileInputRef.current?.click()} 
+                  className={`w-full h-48 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-colors overflow-hidden relative ${uploadedFile ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}
+                >
+                  {uploadedFileUrl ? (
+                    <div className="relative w-full h-full flex flex-col items-center justify-center">
+                      <img src={uploadedFileUrl} alt="preview" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                      <Check className="w-10 h-10 text-indigo-600 mb-2 relative z-10 bg-white/80 rounded-full p-1" />
+                      <p className="text-indigo-700 font-bold text-sm relative z-10 bg-white/80 px-2 py-0.5 rounded">이미지가 첨부되었습니다</p>
+                      <p className="text-indigo-600 text-xs mt-1 relative z-10 bg-white/80 px-2 rounded">(다시 클릭하여 변경)</p>
+                    </div>
+                  ) : (
+                    <>
+                      <Camera className="w-10 h-10 text-gray-400 mb-2" />
+                      <p className="text-gray-500 font-bold text-sm mb-1">여기를 클릭하여 사진 업로드</p>
+                      <p className="text-gray-400 text-xs font-medium">JPG, PNG 형식 지원</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="absolute bottom-0 w-full p-4 bg-white border-t border-gray-100 pb-safe shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
+              <button disabled={isUploadingID || !uploadedFile} onClick={handleVerifyStudentSubmit} className="w-full flex items-center justify-center py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg disabled:bg-gray-400 shadow-lg shadow-indigo-200 transition-colors">
+                {isUploadingID ? <><Loader2 className="w-6 h-6 animate-spin text-white mr-2" /> 인증 심사 중...</> : '인증 요청하기'}
+              </button>
+            </div>
+          </div>
+        );
+      };
+
+      // --- [화면: 홈] ---
+      const renderHomeTabs = () => {
+        const calcMatchScore = (group, user) => {
+          if (!user) return 0;
+          let score = 10; 
+          if (group.grade === user.grade) score += 20;
+          else if (Math.abs(['중1','중2','중3','고1','고2','고3','N수'].indexOf(group.grade) - ['중1','중2','중3','고1','고2','고3','N수'].indexOf(user.grade)) === 1) score += 10;
+          score += ((group.subjects || []).filter(s => (user.subjects || []).includes(s)).length * 10);
+          if (group.publishers && user.publishers) score += ((group.publishers.filter(p => user.publishers.includes(p)).length) * 5);
+          if ((group.times || []).filter(t => (user.times || []).includes(t)).length > 0) score += 10;
+          if (group.place === user.place) score += 10;
+          return Math.min(score, 99);
+        };
+
+        const recommendedGroups = allGroups
+          .filter(g => g.status === 'open' && g.currentMembers < g.maxMembers && !g.members?.some(m => m.uid === authUser?.uid))
+          .map(g => ({ ...g, distance: g.place === '온라인(디스코드)' ? 0 : getSimulatedDistance(userProfile?.location, g.location), matchScore: calcMatchScore(g, userProfile) }))
+          .filter(g => g.place === '온라인(디스코드)' || g.distance <= 5.0)
+          .sort((a, b) => b.matchScore - a.matchScore);
+
+        const myGroups = allGroups.filter(g => (g.members || []).some(m => m.uid === authUser?.uid));
+
+        const calculateDDay = (dateStr) => {
+          if (!dateStr) return null;
+          const diff = new Date(dateStr) - new Date().setHours(0,0,0,0);
+          const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+          return days === 0 ? 'D-Day' : (days > 0 ? `D-${days}` : `D+${Math.abs(days)}`);
+        };
+
+        return (
+          <div className="flex flex-col h-full bg-slate-50 relative pb-20">
+            {activeTab !== 'profile' && (
+              <div className="bg-white pt-10 pb-4 px-6 shadow-sm z-10 sticky top-0 flex justify-between items-center">
+                <div><p className="text-[11px] text-gray-500 font-bold mb-0.5">내 동네</p><h2 className="text-base font-bold text-gray-900 flex items-center gap-1"><MapPin className="w-4 h-4 text-indigo-600" /> {userProfile?.location}</h2></div>
+                <div className="flex gap-2 items-center"><div className="bg-orange-50 text-orange-600 text-xs font-bold px-2 py-1 rounded-md flex items-center gap-1"><Thermometer className="w-3 h-3"/> {userProfile?.mannerScore}°C</div></div>
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {activeTab === 'recommend' && (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-amber-500" /><h3 className="text-lg font-extrabold text-gray-900">맞춤 스터디 리스트</h3></div>
+                    <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded font-bold">반경 5km 이내</span>
+                  </div>
+                  
+                  {recommendedGroups.length === 0 ? (
+                    <div className="text-center py-10 text-gray-500 bg-white rounded-2xl border border-gray-100 shadow-sm"><Search className="w-10 h-10 mx-auto text-gray-300 mb-3" />새롭게 참여 가능한 조건의 스터디가 없습니다.</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {recommendedGroups.map(group => (
+                        <div key={group.id} onClick={() => { setSelectedGroup(group); setCurrentView('groupDetail'); }} className="bg-white p-5 rounded-2xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] cursor-pointer relative">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex flex-wrap gap-1.5"><span className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded">{group.grade}</span><span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded">{group.subjects?.[0]}</span>
+                              {group.targetDDayDate && (<span className="px-2 py-1 bg-rose-50 text-rose-600 text-xs font-bold rounded flex items-center gap-1"><Flag className="w-3 h-3"/> {calculateDDay(group.targetDDayDate)}</span>)}
+                            </div>
+                            <div className="text-indigo-600 font-extrabold text-xs bg-indigo-50 px-2 py-1 rounded-full">{group.matchScore}% 매칭</div>
+                          </div>
+                          <h4 className="font-bold text-[17px] text-gray-900 mb-1 leading-tight">{group.title}</h4>
+                          <div className="text-xs text-gray-500 mb-4 flex items-center gap-2">
+                            <span className="flex items-center gap-0.5"><Clock className="w-3 h-3"/> {group.times?.[0] || '시간협의'}</span>
+                            <span className="flex items-center gap-0.5"><Coffee className="w-3 h-3"/> {group.place}</span>
+                          </div>
+                          <div className="flex justify-between items-center pt-3 border-t border-gray-50 text-sm">
+                            <div className="flex items-center gap-3 text-gray-500">
+                              <span className="flex items-center gap-1 text-[11px] font-bold bg-gray-100 px-1.5 py-0.5 rounded">
+                                <MapPin className="w-3 h-3"/> {group.place === '온라인(디스코드)' ? '온라인' : `${group.distance}km`}
+                              </span>
+                              <span className="flex items-center gap-1 font-bold text-gray-700"><Users className="w-4 h-4 text-indigo-400" /> {group.currentMembers}/{group.maxMembers}명</span>
+                            </div>
+                            <div className="text-indigo-600 text-xs font-bold flex items-center">자세히 <ChevronRight className="w-4 h-4"/></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+              
+              {activeTab === 'myGroups' && (
+                <div>
+                  <h3 className="text-lg font-extrabold text-gray-900 mb-4">참여 중인 스터디</h3>
+                  {myGroups.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-48 text-center bg-white rounded-2xl border border-gray-100"><BookOpen className="w-10 h-10 text-gray-300 mb-3" /><p className="text-gray-500 font-medium text-sm">참여 중인 스터디가 없습니다.</p></div>
+                  ) : (
+                     <div className="space-y-4">
+                      {myGroups.map(group => {
+                        const isMyHost = group.hostId === authUser.uid;
+                        return (
+                          <div key={group.id} onClick={() => { setSelectedGroup(group); setCurrentView('groupDetail'); }} className="bg-white p-5 rounded-2xl shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] cursor-pointer relative overflow-hidden border border-indigo-50">
+                            <div className={`absolute top-0 left-0 w-1.5 h-full ${isMyHost ? 'bg-amber-400' : 'bg-indigo-500'}`}></div>
+                            <div className="flex justify-between items-start pl-2 mb-1"><h4 className="font-bold text-[17px] text-gray-900">{group.title}</h4>{isMyHost && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">방장👑</span>}</div>
+                            {group.targetDDayDate && (<div className="pl-2 mb-3 mt-1"><span className="inline-flex items-center gap-1 text-xs font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded"><Flag className="w-3 h-3"/> {group.targetDDayName} {calculateDDay(group.targetDDayDate)}</span></div>)}
+                            <div className="flex items-center space-x-3 text-sm text-gray-500 pt-3 mt-2 border-t border-gray-50 pl-2"><div className="flex items-center gap-1 font-bold"><Users className="w-4 h-4 text-indigo-400" /> {group.currentMembers}명 참여중</div><div className="text-indigo-600 font-bold ml-auto flex items-center text-xs">입장하기 <ChevronRight className="w-4 h-4" /></div></div>
+                          </div>
+                        );
+                      })}
+                     </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'profile' && (
+                <div className="space-y-6">
+                  <div className="pt-8 pb-6 flex flex-col items-center">
+                    <div className="relative mb-3"><div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-3xl shadow-inner">{userProfile?.name.charAt(0)}</div>{userProfile?.isStudentVerified && <div className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md"><BadgeCheck className="w-6 h-6 text-blue-500" /></div>}</div>
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-1">{userProfile?.name}</h2>
+                    <div className="text-xs text-gray-500 mt-1 mb-2">{userProfile?.email}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-bold flex items-center gap-1"><Thermometer className="w-3 h-3"/> 매너 {userProfile?.mannerScore}°C</span>
+                      {userProfile?.isStudentVerified ? 
+                        <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full font-bold flex items-center gap-1"><BadgeCheck className="w-3 h-3"/> 학생인증 완료</span>
+                        : <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-bold flex items-center gap-1">인증 안됨</span>
+                      }
+                    </div>
+                  </div>
+                  
+                  {!userProfile?.isStudentVerified && (
+                    <button onClick={() => setCurrentView('verifyStudent')} className="w-full bg-blue-50 text-blue-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 border border-blue-100 hover:bg-blue-100 transition-colors">
+                      <BadgeCheck className="w-5 h-5"/> 학생증 인증하고 배지 받기
+                    </button>
+                  )}
+
+                  <div className="bg-white rounded-2xl shadow-sm p-5 space-y-4 border border-gray-100">
+                    <div className="flex items-center justify-between"><span className="text-sm font-bold text-gray-500">학교</span><span className="text-sm font-bold text-gray-900">{userProfile?.school || '미입력'}</span></div>
+                    <div className="flex items-center justify-between"><span className="text-sm font-bold text-gray-500">학년</span><span className="text-sm font-bold text-gray-900">{userProfile?.grade}</span></div>
+                    <div className="flex items-center justify-between"><span className="text-sm font-bold text-gray-500">지역</span><span className="text-sm font-bold text-gray-900">{userProfile?.location}</span></div>
+                    <div className="flex items-center justify-between"><span className="text-sm font-bold text-gray-500">선호 장소</span><span className="text-sm font-bold text-gray-900">{userProfile?.place}</span></div>
+                  </div>
+                  
+                  <div>
+                    <button onClick={handleOpenEditProfile} className="w-full flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 py-4 px-4 rounded-xl font-bold hover:bg-gray-50 transition-colors mb-2"><Edit2 className="w-5 h-5" /> 프로필 수정하기</button>
+                    <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-600 py-4 px-4 rounded-xl font-bold hover:bg-gray-200 transition-colors"><LogOut className="w-5 h-5" /> 로그아웃</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {activeTab === 'recommend' && (<button onClick={() => setCurrentView('createGroup')} className="absolute bottom-24 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-[0_4px_15px_rgba(79,70,229,0.4)] flex items-center justify-center z-20 hover:scale-105 transition-transform"><Plus className="w-7 h-7" /></button>)}
+            <div className="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around py-2 px-2 pb-safe z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+              <button onClick={() => setActiveTab('recommend')} className={`flex flex-col items-center p-2 w-16 transition-colors ${activeTab === 'recommend' ? 'text-indigo-600' : 'text-gray-400'}`}><Search className="w-6 h-6 mb-1" /><span className="text-[10px] font-bold">홈</span></button>
+              <button onClick={() => setActiveTab('myGroups')} className={`flex flex-col items-center p-2 w-16 transition-colors ${activeTab === 'myGroups' ? 'text-indigo-600' : 'text-gray-400'}`}><BookOpen className="w-6 h-6 mb-1" /><span className="text-[10px] font-bold">내 스터디</span></button>
+              <button onClick={() => setActiveTab('profile')} className={`flex flex-col items-center p-2 w-16 transition-colors ${activeTab === 'profile' ? 'text-indigo-600' : 'text-gray-400'}`}><User className="w-6 h-6 mb-1" /><span className="text-[10px] font-bold">내 정보</span></button>
+            </div>
+          </div>
+        );
+      };
+
+      // --- [화면: 스터디 개설] ---
+      const renderCreateGroup = () => (
+        <div className="flex flex-col h-full bg-white relative">
+          <div className="pt-12 pb-4 px-4 sticky top-0 bg-white z-10 flex items-center border-b border-gray-100">
+            <button onClick={() => setCurrentView('home')} className="p-2 mr-1"><ArrowLeft className="w-6 h-6 text-gray-800" /></button>
+            <h2 className="text-lg font-bold">새 스터디 만들기</h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-28">
+            <div><label className="block text-sm font-bold text-gray-700 mb-2">어떤 스터디인가요?</label><input type="text" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 font-bold" placeholder="예: 고2 수학 기출 빡공방" value={createTitle} onChange={(e) => setCreateTitle(e.target.value)} /></div>
+            <div className="bg-rose-50 p-4 rounded-xl border border-rose-100">
+              <label className="block text-sm font-bold text-rose-800 mb-3 flex items-center gap-1"><Target className="w-4 h-4"/>공동 목표 D-Day (선택)</label>
+              <div className="flex gap-2"><input type="text" placeholder="예: 중간고사" className="flex-1 p-3 bg-white border border-rose-200 rounded-lg outline-none text-sm" value={createDDayName} onChange={e=>setCreateDDayName(e.target.value)} /><input type="date" className="flex-1 p-3 bg-white border border-rose-200 rounded-lg outline-none text-sm text-gray-700" value={createDDayDate} onChange={e=>setCreateDDayDate(e.target.value)} /></div>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-3">모집 정원 (방장 포함)</label>
+              <div className="flex gap-3">
+                {[3, 4, 5, 6].map(num => (<button key={num} onClick={() => setCreateMaxMembers(num)} className={`flex-1 py-3 rounded-xl border text-center font-bold ${createMaxMembers === num ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100' : 'bg-white border-gray-200 text-gray-600'}`}>{num}명</button>))}
+              </div>
+            </div>
+            <div><label className="block text-sm font-bold text-gray-700 mb-2">상세 설명 및 규칙</label><textarea className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 h-32 resize-none text-sm" placeholder="벌금 규칙, 모임 빈도 등을 상세히 적어주세요." value={createDesc} onChange={(e) => setCreateDesc(e.target.value)} /></div>
+          </div>
+          <div className="absolute bottom-0 w-full p-4 bg-white border-t border-gray-100 pb-safe shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
+            <button disabled={isProcessing} onClick={handleCreateGroup} className="w-full flex items-center justify-center py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg disabled:bg-gray-400 shadow-lg shadow-indigo-200">
+              {isProcessing ? <Loader2 className="w-6 h-6 animate-spin text-white" /> : '스터디 개설하기'}
+            </button>
+          </div>
+        </div>
+      );
+
+      // --- [화면: 스터디 상세] ---
+      const renderGroupDetail = () => {
+        if (!selectedGroup) return null;
+        const liveGroup = allGroups.find(g => g.id === selectedGroup.id) || selectedGroup;
+        const isFull = liveGroup.currentMembers >= liveGroup.maxMembers;
+        const isMember = (liveGroup.members || []).some(m => m.uid === authUser.uid);
+        const isHost = liveGroup.hostId === authUser.uid;
+
+        const calculateDDay = (dateStr) => {
+          if (!dateStr) return null;
+          const diff = new Date(dateStr) - new Date().setHours(0,0,0,0);
+          const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+          return days === 0 ? 'D-Day' : (days > 0 ? `D-${days}` : `D+${Math.abs(days)}`);
+        };
+
+        return (
+          <div className="flex flex-col h-full bg-slate-50 relative">
+            <div className="pt-12 pb-4 px-4 sticky top-0 bg-white/95 backdrop-blur-md z-20 flex items-center justify-between border-b border-gray-200 shadow-sm">
+              <div className="flex items-center"><button onClick={() => setCurrentView('home')} className="p-2 mr-1"><ArrowLeft className="w-6 h-6 text-gray-800" /></button><h2 className="text-lg font-bold">스터디 정보</h2></div>
+              {!isHost && <button onClick={() => showModal('신고 접수', '정상적으로 신고가 접수되었습니다.')} className="p-2 text-gray-400 hover:text-rose-500 transition-colors"><AlertTriangle className="w-5 h-5"/></button>}
+            </div>
+
+            <div className="flex-1 overflow-y-auto pb-32">
+              {isHost && (
+                <div className="bg-indigo-600 text-white p-4 flex justify-between items-center shadow-md">
+                  <div><span className="text-xs font-bold bg-indigo-500 px-2 py-0.5 rounded mb-1 inline-block">방장 권한</span><p className="text-sm font-medium">현재 상태: {liveGroup.status === 'open' ? '모집 중 🟢' : '모집 마감 🔴'}</p></div>
+                  <button onClick={handleToggleStatus} className="bg-white text-indigo-600 text-xs font-bold px-3 py-2 rounded-lg shadow-sm">{liveGroup.status === 'open' ? '모집 마감하기' : '모집 재오픈'}</button>
+                </div>
+              )}
+
+              <div className="p-6 bg-white border-b border-gray-100">
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  <span className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded">{liveGroup.grade}</span>
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded">{liveGroup.subjects?.[0]}</span>
+                  {liveGroup.targetDDayDate && (<span className="px-2 py-1 bg-rose-50 text-rose-600 text-xs font-bold rounded flex items-center gap-1"><Flag className="w-3 h-3"/> {liveGroup.targetDDayName} {calculateDDay(liveGroup.targetDDayDate)}</span>)}
+                </div>
+                <h1 className="text-2xl font-extrabold text-gray-900 mb-4 leading-tight">{liveGroup.title}</h1>
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className="bg-gray-50 p-3 rounded-xl flex items-center gap-2"><MapPin className="w-4 h-4 text-indigo-500" /><span className="text-sm font-bold text-gray-700">{liveGroup.location}</span></div>
+                  <div className="bg-gray-50 p-3 rounded-xl flex items-center gap-2"><Coffee className="w-4 h-4 text-orange-500" /><span className="text-sm font-bold text-gray-700">{liveGroup.place}</span></div>
+                  <div className="bg-gray-50 p-3 rounded-xl flex items-center gap-2 col-span-2"><Clock className="w-4 h-4 text-blue-500" /><span className="text-sm font-bold text-gray-700">주 만남: {(liveGroup.times || []).join(', ')}</span></div>
+                </div>
+                <div className="mb-2"><h3 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-1.5"><BookOpen className="w-4 h-4 text-indigo-600" /> 스터디 소개</h3><p className="text-gray-700 leading-relaxed text-[15px] whitespace-pre-wrap bg-gray-50/50 p-4 rounded-xl">{liveGroup.description}</p></div>
+              </div>
+
+              <div className="p-6">
+                <h3 className="text-base font-bold text-gray-900 flex items-center gap-2 mb-4"><Users className="w-5 h-5 text-indigo-600" /> 참여 멤버 ({liveGroup.currentMembers}/{liveGroup.maxMembers})</h3>
+                <div className="space-y-3">
+                  {(liveGroup.members || []).map((member, idx) => {
+                    const isMe = member.uid === authUser.uid;
+                    return (
+                      <div key={idx} className={`flex items-center justify-between p-4 rounded-2xl bg-white shadow-sm border ${isMe ? 'border-indigo-100' : 'border-gray-100'}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-xl relative">{member.role === 'host' ? '👑' : '😎'}{member.isStudentVerified && <BadgeCheck className="w-4 h-4 text-blue-500 absolute -bottom-1 -right-1 bg-white rounded-full"/>}</div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">{member.name} {isMe && <span className="text-[10px] text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded font-bold">나</span>}</p>
+                            <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">{member.grade} <span className="text-gray-300">|</span> 매너 {member.mannerScore}°C</p>
+                          </div>
+                        </div>
+                        {isHost && !isMe && (<button onClick={() => handleKickMember(member.uid, member.name)} className="text-xs font-bold text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100">내보내기</button>)}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute bottom-0 w-full p-4 bg-white border-t border-gray-200 pb-safe z-20 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
+              <div className="flex flex-col gap-2">
+                {isMember ? (
+                  <><button onClick={() => setCurrentView('chat')} className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold text-[17px] shadow-lg shadow-indigo-200 flex justify-center items-center gap-2"><Megaphone className="w-5 h-5"/> 채팅방 및 공지 보기</button>
+                    {!isHost && <button onClick={handleLeaveGroup} className="w-full py-3 text-gray-500 font-bold text-sm hover:bg-gray-50 rounded-xl flex items-center justify-center gap-1"><LeaveIcon className="w-4 h-4" /> 스터디 탈퇴하기</button>}
+                  </>
+                ) : (
+                  <button disabled={isProcessing || isFull || liveGroup.status === 'closed'} onClick={handleJoinGroup} className={`w-full flex items-center justify-center py-4 rounded-xl font-bold text-[17px] ${isFull || liveGroup.status === 'closed' ? 'bg-gray-200 text-gray-400' : 'bg-indigo-600 text-white shadow-lg'}`}>
+                    {isProcessing ? <Loader2 className="w-6 h-6 animate-spin text-white" /> : (liveGroup.status === 'closed' ? '모집이 마감되었습니다' : isFull ? '정원이 마감되었습니다' : '가입 신청하기')}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // --- [화면: 채팅방] ---
+      const renderChat = () => {
+        if (!selectedGroup) return null;
+        const isHost = selectedGroup.hostId === authUser.uid;
+
+        return (
+          <div className="flex flex-col h-full bg-[#F5F6F8] relative">
+            <div className="pt-12 pb-3 px-4 sticky top-0 bg-white/95 backdrop-blur-md z-10 flex items-center border-b border-gray-200 shadow-sm">
+              <button onClick={() => setCurrentView('groupDetail')} className="p-2 mr-1"><ArrowLeft className="w-6 h-6 text-gray-800" /></button>
+              <div className="flex-1"><h2 className="text-base font-bold leading-tight truncate">{selectedGroup.title}</h2><p className="text-[11px] text-gray-500 font-bold"><Users className="w-3 h-3 inline mr-0.5 pb-[1px]"/>{selectedGroup.currentMembers}명 참여중</p></div>
+            </div>
+            <div className="bg-indigo-50 border-b border-indigo-100 p-3 flex items-start gap-2 shadow-sm z-10">
+              <Megaphone className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1"><p className="text-xs text-indigo-900 font-bold leading-relaxed">{selectedGroup.notice || '등록된 공지사항이 없습니다.'}</p></div>
+              {isHost && <button onClick={() => showModal('공지 수정', '공지 수정 기능은 준비 중입니다.')} className="text-[10px] text-indigo-500 font-bold bg-white px-2 py-1 rounded border border-indigo-200">수정</button>}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24" ref={chatScrollRef}>
+              <div className="text-center my-4"><span className="bg-black/10 text-gray-600 text-[10px] font-bold px-3 py-1 rounded-full">스터디가 시작되었습니다. 첫 인사를 건네보세요!</span></div>
+              {messages.map(msg => {
+                const isSystem = msg.uid === 'system';
+                if (isSystem) return <div key={msg.id} className="text-center my-2"><span className="bg-rose-50 text-rose-600 text-[11px] font-bold px-3 py-1.5 rounded-full">{msg.text}</span></div>
+                const isMe = msg.uid === authUser.uid;
+                return (
+                  <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-fade-in-up`}>
+                    {!isMe && <span className="text-[11px] text-gray-500 mb-1 ml-1 font-bold">{msg.name}</span>}
+                    <div className={`px-4 py-2.5 rounded-2xl max-w-[75%] text-[15px] leading-relaxed shadow-sm ${isMe ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'}`}>{msg.text}</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <form onSubmit={handleSendMessage} className="absolute bottom-0 w-full p-3 bg-white border-t border-gray-200 pb-safe flex gap-2 z-20">
+              <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} className="flex-1 bg-gray-100 rounded-full pl-5 pr-4 py-3 outline-none focus:ring-2 focus:ring-indigo-100 transition-all text-[15px] font-medium" placeholder="메시지 보내기..." />
+              <button type="submit" disabled={!newMessage.trim()} className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center disabled:bg-gray-300 disabled:shadow-none shadow-md shadow-indigo-200 transition-colors">
+                <Send className="w-5 h-5 ml-[-2px] mt-[2px]" />
+              </button>
+            </form>
+          </div>
+        );
+      };
+
+      return (
+        <div className="max-w-md mx-auto h-screen bg-black overflow-hidden font-sans selection:bg-indigo-100 relative shadow-2xl sm:border-x sm:border-gray-200">
+          <CustomModal />
+          {!isLoggedIn ? (
+            currentView === 'signup' ? renderSignUp() : renderLogin()
+          ) : (
+            currentView === 'onboarding' ? renderOnboarding() :
+            currentView === 'editProfile' ? renderEditProfile() :
+            currentView === 'verifyStudent' ? renderVerifyStudent() :
+            currentView === 'home' ? renderHomeTabs() :
+            currentView === 'groupDetail' ? renderGroupDetail() :
+            currentView === 'createGroup' ? renderCreateGroup() :
+            currentView === 'chat' ? renderChat() : renderHomeTabs()
+          )}
+        </div>
+      );
     }
-    card.appendChild(badges);
 
-    var title = document.createElement('div');
-    title.className = 'modal-title';
-    title.textContent = post.title;
-    card.appendChild(title);
-
-    var meta1 = document.createElement('div');
-    meta1.className = 'flyer-meta';
-    meta1.innerHTML = '🗓 <b>' + escapeHtml(post.schedule) + '</b>';
-    card.appendChild(meta1);
-
-    var cap = capacityNumber(post);
-    var joined = (post.participants || []).length;
-    var meta2 = document.createElement('div');
-    meta2.className = 'flyer-meta';
-    meta2.innerHTML = cap !== null
-      ? '👥 <b>' + joined + ' / ' + cap + '명</b> 참여 중' + (joined >= cap ? ' <span class="flyer-capacity-full">· 정원 마감</span>' : '')
-      : '👥 참여 ' + joined + '명 · 인원 협의';
-    card.appendChild(meta2);
-
-    if(post.description){
-      var desc = document.createElement('div');
-      desc.className = 'flyer-desc';
-      desc.style.marginTop = '10px';
-      desc.textContent = post.description;
-      card.appendChild(desc);
-    }
-
-    var who = document.createElement('div');
-    who.className = 'flyer-meta';
-    who.style.marginTop = '12px';
-    who.innerHTML = '✍️ ' + escapeHtml(post.nickname) + ' · ' + escapeHtml(post.contact);
-    card.appendChild(who);
-
-    if(joined > 0){
-      var chipRow = document.createElement('div');
-      chipRow.className = 'participant-chip-row';
-      post.participants.forEach(function(n){
-        var chip = document.createElement('span');
-        chip.className = 'participant-chip';
-        chip.textContent = (n && typeof n === 'object') ? n.nickname : n;
-        chipRow.appendChild(chip);
-      });
-      card.appendChild(chipRow);
-    }
-
-    var full = isPostFull(post);
-    var alreadyJoined = !!(state.currentUser && post.participants.some(function(p){
-      return p && typeof p === 'object' && p.id === state.currentUser.id;
-    }));
-    var joinBtn = document.createElement('button');
-    joinBtn.className = 'flyer-join-btn';
-    if(alreadyJoined){
-      joinBtn.textContent = '이미 참여했어요 ✓';
-      joinBtn.disabled = true;
-    } else if(full){
-      joinBtn.textContent = '정원이 마감됐어요';
-      joinBtn.disabled = true;
-    } else {
-      joinBtn.textContent = '참여하기';
-      joinBtn.disabled = false;
-    }
-    joinBtn.addEventListener('click', function(){ joinPost(post); });
-    card.appendChild(joinBtn);
-
-    if(canDeletePost(post)){
-      var delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.className = 'btn-secondary';
-      delBtn.style.width = '100%';
-      delBtn.style.marginTop = '10px';
-      delBtn.textContent = '이 글 삭제하기';
-      delBtn.addEventListener('click', function(){ deletePost(post); });
-      card.appendChild(delBtn);
-    }
-
-    wrap.appendChild(card);
-    return wrap;
-  }
-
-  function renderFlyer(post){
-    var f = document.createElement('div');
-    f.className = 'flyer ' + catClass(post.category);
-    f.addEventListener('click', function(){ state.detailPost = post; render(); });
-
-    var pin = document.createElement('div');
-    pin.className = 'pin';
-    f.appendChild(pin);
-
-    var badges = document.createElement('div');
-    badges.className = 'flyer-badges';
-
-    var cat = document.createElement('span');
-    cat.className = 'flyer-cat';
-    cat.textContent = post.category;
-    badges.appendChild(cat);
-
-    if(post.grade){
-      var grade = document.createElement('span');
-      grade.className = 'flyer-grade';
-      grade.textContent = post.grade;
-      badges.appendChild(grade);
-    }
-    f.appendChild(badges);
-
-    var title = document.createElement('h3');
-    title.className = 'flyer-title';
-    title.textContent = post.title;
-    f.appendChild(title);
-
-    var meta1 = document.createElement('div');
-    meta1.className = 'flyer-meta';
-    meta1.innerHTML = '🗓 <b>' + escapeHtml(post.schedule) + '</b>';
-    f.appendChild(meta1);
-
-    var cardCap = capacityNumber(post);
-    var cardJoined = (post.participants || []).length;
-    var meta2 = document.createElement('div');
-    meta2.className = 'flyer-meta';
-    meta2.innerHTML = cardCap !== null
-      ? '👥 ' + cardJoined + ' / ' + cardCap + '명' + (cardJoined >= cardCap ? ' <span class="flyer-capacity-full">· 마감</span>' : '')
-      : '👥 참여 ' + cardJoined + '명 · 인원 협의';
-    f.appendChild(meta2);
-
-    if(post.description){
-      var desc = document.createElement('div');
-      desc.className = 'flyer-desc';
-      desc.textContent = post.description;
-      f.appendChild(desc);
-    }
-
-    var footer = document.createElement('div');
-    footer.className = 'flyer-footer';
-    var who = document.createElement('span');
-    who.textContent = post.nickname + ' · ' + post.contact;
-    who.style.overflow = 'hidden';
-    who.style.textOverflow = 'ellipsis';
-    who.style.whiteSpace = 'nowrap';
-    who.style.maxWidth = '75%';
-    footer.appendChild(who);
-
-    if(canDeletePost(post)){
-      var del = document.createElement('button');
-      del.className = 'flyer-delete';
-      del.textContent = '삭제';
-      del.addEventListener('click', function(e){ e.stopPropagation(); deletePost(post); });
-      footer.appendChild(del);
-    }
-
-    f.appendChild(footer);
-    return f;
-  }
-
-  function render(){
-    app.innerHTML = '';
-
-    // Header
-    var header = document.createElement('div');
-    header.className = 'board-header';
-
-    var h1 = document.createElement('h1');
-    h1.className = 'board-title';
-    h1.textContent = '📌 동네 스터디 게시판';
-    header.appendChild(h1);
-
-    var sub = document.createElement('div');
-    sub.className = 'board-sub';
-    sub.textContent = '중고등학생을 위한, 우리 동네에서만 보이는 스터디 모집 코르크보드';
-    header.appendChild(sub);
-
-    if(state.currentUser){
-      var userPill = document.createElement('button');
-      userPill.className = 'region-pill';
-      userPill.innerHTML = '👤 <b>' + escapeHtml(state.currentUser.nickname) + '</b>님 &nbsp;·&nbsp; 로그아웃';
-      userPill.addEventListener('click', function(){ logout(); });
-      header.appendChild(userPill);
-    }
-
-    if(state.myRegion){
-      var pill = document.createElement('button');
-      pill.className = 'region-pill';
-      pill.innerHTML = '📍 지금 보는 동네: <b>' + escapeHtml(state.myRegion) + '</b> &nbsp;·&nbsp; 변경';
-      pill.addEventListener('click', function(){ state.showRegionPicker = true; render(); });
-      header.appendChild(pill);
-    }
-
-    app.appendChild(header);
-
-    // Body
-    var wrap = document.createElement('div');
-    wrap.className = 'board-wrap';
-
-    if(state.loading){
-      var loadingRow = document.createElement('div');
-      loadingRow.className = 'loading-row';
-      loadingRow.textContent = '게시판을 불러오는 중...';
-      wrap.appendChild(loadingRow);
-    } else if(state.error){
-      var errRow = document.createElement('div');
-      errRow.className = 'loading-row';
-      errRow.textContent = state.error;
-      wrap.appendChild(errRow);
-    } else {
-      var chipRow = document.createElement('div');
-      chipRow.className = 'grade-filter-row';
-      ['전체'].concat(GRADES.filter(function(g){ return g !== '학년무관'; })).forEach(function(g){
-        var chip = document.createElement('button');
-        chip.className = 'grade-chip' + (state.gradeFilter === g ? ' selected' : '');
-        chip.textContent = g;
-        chip.addEventListener('click', function(){ state.gradeFilter = g; render(); });
-        chipRow.appendChild(chip);
-      });
-      wrap.appendChild(chipRow);
-
-      var posts = displayedPosts();
-      if(posts.length === 0){
-        var empty = document.createElement('div');
-        empty.className = 'empty-state';
-        var emptyLine = state.gradeFilter === '전체'
-          ? '아직 ' + escapeHtml(state.myRegion) + '엔 스터디가 없어요'
-          : escapeHtml(state.myRegion) + ' · ' + escapeHtml(state.gradeFilter) + ' 스터디가 아직 없어요';
-        empty.innerHTML = '<div class="big">' + emptyLine + '</div>' +
-                           '<div class="small">첫 번째 스터디를 올려서 동네 친구들을 모아보세요</div>';
-        wrap.appendChild(empty);
-      } else {
-        var grid = document.createElement('div');
-        grid.className = 'flyer-grid';
-        posts.forEach(function(p){ grid.appendChild(renderFlyer(p)); });
-        wrap.appendChild(grid);
-      }
-    }
-
-    app.appendChild(wrap);
-
-    // FAB
-    if(state.currentUser && state.myRegion && !state.loading){
-      var fab = document.createElement('button');
-      fab.className = 'fab';
-      fab.innerHTML = '➕ 스터디 올리기';
-      fab.addEventListener('click', function(){ state.showCreate = true; render(); });
-      app.appendChild(fab);
-    }
-
-    // Modals
-    if(!state.currentUser){
-      app.appendChild(renderAuthModal());
-    } else if(!state.myRegion){
-      app.appendChild(renderRegionPickerModal(true));
-    } else if(state.showRegionPicker){
-      app.appendChild(renderRegionPickerModal(false));
-    } else if(state.showCreate){
-      app.appendChild(renderCreateModal());
-    } else if(state.detailPost){
-      app.appendChild(renderDetailModal(state.detailPost));
-    }
-  }
-
-  async function init(){
-    render();
-    await loadSession();
-    render();
-    await loadMyRegion();
-    render();
-    if(state.currentUser && state.myRegion){
-      await loadPosts();
-    } else {
-      state.loading = false;
-      render();
-    }
-  }
-
-  // watch region changes to (re)load posts
-  var _setMyRegion = setMyRegion;
-  setMyRegion = async function(region){
-    await _setMyRegion(region);
-    if(state.posts.length === 0){
-      await loadPosts();
-    }
-  };
-
-  init();
-})();
-</script>
+    // 렌더링
+    const rootElement = document.getElementById('root');
+    const root = createRoot(rootElement);
+    root.render(<App />);
+  </script>
 </body>
 </html>
